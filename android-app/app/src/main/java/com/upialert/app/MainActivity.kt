@@ -94,7 +94,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadPreferences() {
         val prefs = getSharedPreferences("upi_alert_prefs", Context.MODE_PRIVATE)
-        binding.etServerUrl.setText(prefs.getString("server_url", "http://192.168.1.100:3000"))
+        binding.etServerUrl.setText(prefs.getString("server_url", "https://ntfy.sh/upi_alert_jaanedobhai_live"))
         binding.etApiToken.setText(prefs.getString("api_token", "upi_stream_secret_123"))
     }
 

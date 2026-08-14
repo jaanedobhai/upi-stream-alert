@@ -5,14 +5,15 @@ let isPlaying = false;
 let socket = null;
 let lastAlertTimestamp = Date.now();
 
-// Configuration defaults
+// Configuration defaults — 100% Zero-Setup Instant Cloud
 let config = {
-  connectionMode: 'firebase', // 'firebase' (100% Serverless) or 'websocket'
-  firebaseDbUrl: 'https://YOUR-PROJECT-ID-default-rtdb.firebaseio.com',
+  connectionMode: 'instant', // 'instant' (Zero Setup), 'firebase', or 'websocket'
+  cloudChannelUrl: 'https://ntfy.sh/upi_alert_jaanedobhai_live',
+  firebaseDbUrl: '',
   relayUrl: 'http://localhost:3000',
   alertDuration: 6000,
   enableTts: true,
-  ttsVoice: 'Brian', // Brian (UK), Raveena (Indian English), Aditi (Indian), Amy, Matthew, etc.
+  ttsVoice: 'Brian', // Brian, Raveena, Aditi, Amy, Matthew, etc.
   ttsVolume: 0.9,
   minAmount: 1,
   soundUrl: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'
@@ -22,9 +23,10 @@ let config = {
 window.addEventListener('onWidgetLoad', function (obj) {
   const fieldData = obj.detail.fieldData || {};
   
+  if (fieldData.cloudChannelUrl) config.cloudChannelUrl = fieldData.cloudChannelUrl;
   if (fieldData.connectionMode) config.connectionMode = fieldData.connectionMode;
-  if (fieldData.relayUrl) config.relayUrl = fieldData.relayUrl;
   if (fieldData.firebaseDbUrl) config.firebaseDbUrl = fieldData.firebaseDbUrl;
+  if (fieldData.relayUrl) config.relayUrl = fieldData.relayUrl;
   if (fieldData.alertDuration) config.alertDuration = parseInt(fieldData.alertDuration) * 1000;
   if (typeof fieldData.enableTts !== 'undefined') config.enableTts = fieldData.enableTts;
   if (fieldData.ttsVoice) config.ttsVoice = fieldData.ttsVoice;
@@ -37,12 +39,6 @@ window.addEventListener('onWidgetLoad', function (obj) {
 // Standalone fallback initialization if opened outside StreamElements
 if (typeof window.SE_API === 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('relay')) config.relayUrl = urlParams.get('relay');
-    if (urlParams.get('firebase')) {
-      config.connectionMode = 'firebase';
-      config.firebaseDbUrl = urlParams.get('firebase');
-    }
     initConnection();
   });
 }
@@ -50,8 +46,47 @@ if (typeof window.SE_API === 'undefined') {
 function initConnection() {
   if (config.connectionMode === 'firebase' && config.firebaseDbUrl) {
     initFirebaseConnection();
-  } else {
+  } else if (config.connectionMode === 'websocket') {
     initSocketConnection();
+  } else {
+    initInstantCloudConnection();
+  }
+}
+
+/**
+ * Option 1: 100% Zero-Setup Instant Cloud (No Account or Server Needed)
+ */
+function initInstantCloudConnection() {
+  let sseUrl = config.cloudChannelUrl.trim().replace(/\/+$/, '');
+  if (!sseUrl.endsWith('/sse')) sseUrl += '/sse';
+
+  console.log(`[UPI Widget] ⚡ Connecting to Zero-Config Cloud Channel: ${sseUrl}`);
+
+  try {
+    const eventSource = new EventSource(sseUrl);
+
+    eventSource.onopen = () => {
+      console.log('[UPI Widget] ✅ Connected to Zero-Config Cloud Relay!');
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.event === 'message' && payload.message) {
+          const donation = JSON.parse(payload.message);
+          console.log('[UPI Widget] 💰 Received Live UPI Donation:', donation);
+          queueAlert(donation);
+        }
+      } catch (err) {
+        console.error('[UPI Widget] Error parsing event message:', err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.warn('[UPI Widget] SSE Reconnecting...', err);
+    };
+  } catch (err) {
+    console.error('[UPI Widget] SSE Init Error:', err);
   }
 }
 

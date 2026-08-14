@@ -38,11 +38,13 @@ object NetworkClient {
 
         // Support for Firebase Realtime Database direct REST endpoint
         val isFirebase = targetUrl.contains("firebaseio.com")
+        val isNtfy = targetUrl.contains("ntfy.sh")
+
         if (isFirebase) {
             if (!targetUrl.endsWith(".json")) {
                 targetUrl = targetUrl.removeSuffix("/") + "/alerts.json"
             }
-        } else {
+        } else if (!isNtfy) {
             // Standard Cloud / Node.js Relay Server endpoint
             if (!targetUrl.endsWith("/api/alert")) {
                 targetUrl = targetUrl.removeSuffix("/") + "/api/alert"
@@ -57,7 +59,7 @@ object NetworkClient {
                 .url(targetUrl)
                 .post(requestBody)
 
-            if (!isFirebase && apiToken.isNotEmpty()) {
+            if (!isFirebase && !isNtfy && apiToken.isNotEmpty()) {
                 requestBuilder.addHeader("Authorization", "Bearer $apiToken")
                 requestBuilder.addHeader("x-api-key", apiToken)
             }
