@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
@@ -47,6 +48,20 @@ class MainActivity : AppCompatActivity() {
         setupRecyclerView()
         loadPreferences()
         setupListeners()
+        startListenerService()
+    }
+
+    private fun startListenerService() {
+        try {
+            val serviceIntent = Intent(this, UPINotificationListenerService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
+        } catch (e: Exception) {
+            // Ignored if NotificationListener is bound by system
+        }
     }
 
     override fun onResume() {
