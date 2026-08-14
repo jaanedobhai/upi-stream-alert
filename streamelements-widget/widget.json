@@ -1,0 +1,47 @@
+{
+  "connectionMode": {
+    "type": "dropdown",
+    "label": "Connection Mode",
+    "value": "websocket",
+    "options": {
+      "websocket": "Cloud Server (Render / Railway)",
+      "firebase": "Serverless (Firebase Realtime DB)"
+    }
+  },
+  "relayUrl": {
+    "type": "text",
+    "label": "Cloud Server URL (Render/Railway)",
+    "value": "https://your-app.onrender.com"
+  },
+  "firebaseDbUrl": {
+    "type": "text",
+    "label": "Firebase Database URL (if using Firebase)",
+    "value": "https://your-project-default-rtdb.firebaseio.com"
+  },
+  "alertDuration": {
+    "type": "number",
+    "label": "Alert Duration (Seconds)",
+    "value": 6,
+    "min": 2,
+    "max": 30,
+    "step": 1
+  },
+  "minAmount": {
+    "type": "number",
+    "label": "Minimum Amount (INR ₹)",
+    "value": 1,
+    "min": 1,
+    "max": 10000,
+    "step": 1
+  },
+  "enableTts": {
+    "type": "checkbox",
+    "label": "Enable Text-to-Speech (TTS)",
+    "value": true
+  },
+  "soundUrl": {
+    "type": "sound-input",
+    "label": "Alert Sound URL",
+    "value": "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+  }
+}

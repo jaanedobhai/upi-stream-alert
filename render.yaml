@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: upi-stream-relay
+    env: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && node server.js
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: AUTH_TOKEN
+        value: upi_stream_secret_123

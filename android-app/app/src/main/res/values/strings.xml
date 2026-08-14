@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">UPI StreamAlert</string>
+    <string name="service_name">UPI Payment Notification Listener</string>
+    <string name="enable_permission_btn">Grant Notification Access</string>
+    <string name="permission_granted">✅ Notification Access Granted</string>
+    <string name="permission_denied">⚠️ Notification Access Required</string>
+    <string name="server_url_hint">Cloud URL or Firebase URL</string>
+    <string name="api_token_hint">API Token (Default: upi_stream_secret_123)</string>
+    <string name="save_settings">Save Settings</string>
+    <string name="send_test_alert">Send Test Alert (₹100)</string>
+    <string name="recent_donations_title">Intercepted UPI Donations</string>
+    <string name="currency_inr">₹ (INR)</string>
+</resources>

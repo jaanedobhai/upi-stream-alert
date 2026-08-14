@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>UPI Live Stream Donation Alert</title>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+  <link rel="stylesheet" href="widget.css">
+  <style>
+    /* Controls for quick testing when opened directly in browser */
+    .test-panel {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 10px 18px;
+      border-radius: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      z-index: 999;
+      font-family: 'Outfit', sans-serif;
+    }
+    .test-panel button {
+      background: #00d489;
+      color: #0c0e18;
+      font-weight: 700;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+    .test-panel button:hover {
+      background: #00ffaa;
+    }
+    .test-panel span {
+      color: #94a3b8;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Overlay Widget Markup -->
+  <div id="upi-alert-container" class="alert-container hidden">
+    <div class="alert-card">
+      <div class="alert-glow"></div>
+      <div class="alert-header">
+        <div class="upi-badge">
+          <span class="upi-icon">₹</span>
+          <span class="upi-label">UPI TIP</span>
+        </div>
+        <div class="app-tag" id="alert-app-tag">Google Pay</div>
+      </div>
+      
+      <div class="alert-body">
+        <div class="alert-avatar">
+          <span id="avatar-initial">U</span>
+        </div>
+        <div class="alert-details">
+          <div class="alert-title" id="alert-title">
+            <span class="donor-name" id="donor-name">Rahul</span> 
+            <span class="donated-text">donated</span> 
+            <span class="donor-amount" id="donor-amount">₹500</span> 
+            <span class="platform-text">on UPI!</span>
+          </div>
+          <div class="alert-message hidden" id="alert-message"></div>
+        </div>
+      </div>
+      
+      <div class="alert-progress-bar">
+        <div class="alert-progress-fill" id="alert-progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Test Panel (Hidden in OBS if you don't click it) -->
+  <div class="test-panel" id="test-panel">
+    <span>📡 UPI Overlay Ready</span>
+    <button onclick="triggerTestAlert('Aman Verma', 500, 'GPay')">Test ₹500 Alert</button>
+    <button onclick="triggerTestAlert('Priya Singh', 1000, 'PhonePe')">Test ₹1000 Alert</button>
+  </div>
+
+  <script src="widget.js"></script>
+  <script>
+    function triggerTestAlert(name, amount, app) {
+      if (socket && socket.connected) {
+        socket.emit('trigger_test_alert', { username: name, amount: amount });
+      } else {
+        queueAlert({
+          username: name,
+          amount: amount,
+          currency: 'INR',
+          formattedAmount: `₹${amount}`,
+          sourceApp: app,
+          message: 'Op stream bro! 🎮'
+        });
+      }
+    }
+  </script>
+</body>
+</html>

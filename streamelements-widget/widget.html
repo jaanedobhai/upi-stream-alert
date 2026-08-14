@@ -1,0 +1,36 @@
+<div id="upi-alert-container" class="alert-container hidden">
+  <div class="alert-card">
+    <div class="alert-glow"></div>
+    <div class="alert-header">
+      <div class="upi-badge">
+        <span class="upi-icon">₹</span>
+        <span class="upi-label">UPI TIP</span>
+      </div>
+      <div class="app-tag" id="alert-app-tag">Google Pay</div>
+    </div>
+    
+    <div class="alert-body">
+      <div class="alert-avatar">
+        <span id="avatar-initial">U</span>
+      </div>
+      <div class="alert-details">
+        <div class="alert-title" id="alert-title">
+          <span class="donor-name" id="donor-name">Rahul</span> 
+          <span class="donated-text">donated</span> 
+          <span class="donor-amount" id="donor-amount">₹500</span> 
+          <span class="platform-text">on UPI!</span>
+        </div>
+        <div class="alert-message hidden" id="alert-message"></div>
+      </div>
+    </div>
+    
+    <div class="alert-progress-bar">
+      <div class="alert-progress-fill" id="alert-progress-fill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Load Socket.IO and Firebase SDKs for Cloud Connection -->
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>

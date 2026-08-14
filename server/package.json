@@ -1,0 +1,16 @@
+{
+  "name": "upi-streamelements-relay",
+  "version": "1.0.0",
+  "description": "Relay server bridging Android UPI notification alerts to StreamElements overlay and OBS via WebSockets",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}
