@@ -287,16 +287,40 @@ function playTTS(text) {
   }
 
   try {
-    const ttsAudio = new Audio(ttsUrl);
-    ttsAudio.volume = config.ttsVolume || 0.9;
-    ttsAudio.play().then(() => {
-      console.log(`[UPI Widget] 🎙️ Playing TTS Voice (${voice}): "${cleanText}"`);
-    }).catch(err => {
-      console.warn('[UPI Widget] Cloud TTS blocked, falling back to browser synthesis:', err);
-      playBrowserFallbackTTS(cleanText);
-    });
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+      const ctx = new AudioContext();
+      const ttsAudio = new Audio();
+      ttsAudio.crossOrigin = "anonymous";
+      ttsAudio.src = ttsUrl;
+
+      const source = ctx.createMediaElementSource(ttsAudio);
+      const gainNode = ctx.createGain();
+      
+      // 200% Volume Boost (2.0x Gain)
+      gainNode.gain.setValueAtTime(2.0, ctx.currentTime);
+
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      ttsAudio.play().then(() => {
+        console.log(`[UPI Widget] 🎙️ Playing 200% Boosted TTS (${voice}): "${cleanText}"`);
+      }).catch(err => {
+        // Fallback without Web Audio routing if browser policy limits
+        const directAudio = new Audio(ttsUrl);
+        directAudio.volume = 1.0;
+        directAudio.play().catch(e => playBrowserFallbackTTS(cleanText));
+      });
+      return;
+    }
+
+    const directAudio = new Audio(ttsUrl);
+    directAudio.volume = 1.0;
+    directAudio.play().catch(e => playBrowserFallbackTTS(cleanText));
   } catch (err) {
-    playBrowserFallbackTTS(cleanText);
+    const directAudio = new Audio(ttsUrl);
+    directAudio.volume = 1.0;
+    directAudio.play().catch(e => playBrowserFallbackTTS(cleanText));
   }
 }
 
