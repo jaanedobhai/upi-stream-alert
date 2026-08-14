@@ -177,7 +177,8 @@ function showAlert(data) {
   const messageEl = document.getElementById('alert-message');
   const progressFillEl = document.getElementById('alert-progress-fill');
 
-  const name = data.username || 'Anonymous';
+  const rawName = data.username || 'Anonymous';
+  const name = formatIndianName(rawName);
   donorNameEl.textContent = name;
   donorAmountEl.textContent = data.formattedAmount || `₹${data.amount}`;
   avatarInitialEl.textContent = name.charAt(0).toUpperCase();
@@ -301,4 +302,34 @@ function playBrowserFallbackTTS(text) {
   } catch (err) {
     console.error('Browser TTS failed:', err);
   }
+}
+
+function formatIndianName(raw) {
+  if (!raw) return "Anonymous";
+  let name = raw.trim().replace(/[\(\)\[\]]/g, "").trim();
+
+  // If already contains spaces, just title case
+  if (name.includes(" ")) {
+    return name.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+  }
+
+  // Segment joined names like RAJUALIKHAN, RAHULKUMAR, AMITSINGH
+  const lower = name.toLowerCase();
+  
+  const patterns = [
+    // 3 parts: e.g. rajualikhan
+    /^(raju|rahul|amit|rohit|mohd|md|aman|vikas|vikram|priya|neha|pooja|anil|sunil|deepak|sanjay|ajay|vijay|rajesh|suresh|manoj|dinesh|santosh|pankaj|ashok|mukesh|kamlesh|sachin|vinod|dhanraj|harsh|ankit|tarun|sahil)(ali|kumar|singh|raj|chand|nath|kant|lal|ram|dev|das|pal)(khan|sharma|verma|gupta|yadav|singh|patel|kumar|das|roy|reddy|nair|joshi|bose|kaur|devi|ahmed|alam|ansari|hussain|sheikh|raza|mallick|tiwari|pandey|mishra|jha|shah|jain|agarwal|choudhury|chaudhary|malik)$/i,
+    // 2 parts: e.g. rajukhan, alikhan, rahulkumar, amitsingh
+    /^(raju|rahul|amit|rohit|mohd|md|aman|vikas|vikram|priya|neha|pooja|anil|sunil|deepak|sanjay|ajay|vijay|rajesh|suresh|manoj|dinesh|santosh|pankaj|ashok|mukesh|kamlesh|sachin|vinod|harsh|ankit|tarun|sahil|ali|arif|asif|salman|aamir|shahrukh|irfan|farhan|zaheer|wasim|danish|adnan|faizan|sohail|sameer|rizwan|nadeem|imran|tariq|zubair|rehan|akash|abhishek|ayush|sourabh|shivam|subhash|prashant|gaurav|mayank|kunal|nikhil|vivek|mayur|alok|arun|varun|karan|chetan|naveen|praveen|rakesh|naresh|mahesh|umesh|hemant|jay|dev|ram|krishna|radhe|gopal|govind|madhav|vishnu|shiva|ganesh|surya|om)(khan|kumar|singh|sharma|verma|gupta|yadav|patel|das|roy|reddy|nair|joshi|bose|kaur|devi|ahmed|alam|ansari|hussain|sheikh|raza|mallick|tiwari|pandey|mishra|jha|shah|jain|agarwal|choudhury|chaudhary|malik|ali|begum|khatun|parveen|siddiqui|bano|akter|biwi|sen|ghosh|mukherjee|banerjee|chatterjee|dutta|pal|mitra|saha|biswas|paul|sarkar|mondal|rao|hegde|bhat|shetty|rai|gowda|naidu|pillai|menon|nambiar|iyer|iyengar|deshmukh|patil|pawar|kadam|shinde|gaikwad|jadhav|bhosale|sawant|chavan|more|salunkhe)$/i
+  ];
+
+  for (const regex of patterns) {
+    const match = lower.match(regex);
+    if (match) {
+      return match.slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+    }
+  }
+
+  // Fallback: Title case
+  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 }

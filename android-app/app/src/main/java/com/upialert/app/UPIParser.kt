@@ -189,10 +189,32 @@ object UPIParser {
 
         if (cleaned.isEmpty()) return "UPI Supporter"
 
-        // Capitalize words nicely
-        return cleaned.split(" ").filter { it.isNotEmpty() }.joinToString(" ") { word ->
-            if (word.length <= 1) word.toUpperCase()
-            else word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase()
+        // If name already contains spaces, format as Title Case
+        if (cleaned.contains(" ")) {
+            return cleaned.split("\\s+".toRegex()).filter { it.isNotEmpty() }.joinToString(" ") { word ->
+                if (word.length <= 1) word.toUpperCase()
+                else word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase()
+            }
         }
+
+        // Segment unspaced compound Indian names (e.g. RAJUALIKHAN -> Raju Ali Khan, RAHULKUMAR -> Rahul Kumar)
+        val lower = cleaned.toLowerCase()
+
+        // 3-part names: e.g. rajualikhan, mohdalikhan, rahulkrishnasingh
+        val p3 = Pattern.compile("^(raju|rahul|amit|rohit|mohd|md|aman|vikas|vikram|priya|neha|pooja|anil|sunil|deepak|sanjay|ajay|vijay|rajesh|suresh|manoj|dinesh|santosh|pankaj|ashok|mukesh|kamlesh|sachin|vinod|dhanraj|harsh|ankit|tarun|sahil)(ali|kumar|singh|raj|chand|nath|kant|lal|ram|dev|das|pal)(khan|sharma|verma|gupta|yadav|singh|patel|kumar|das|roy|reddy|nair|joshi|bose|kaur|devi|ahmed|alam|ansari|hussain|sheikh|raza|mallick|tiwari|pandey|mishra|jha|shah|jain|agarwal|choudhury|chaudhary|malik)$", Pattern.CASE_INSENSITIVE)
+        val m3 = p3.matcher(lower)
+        if (m3.find()) {
+            return listOf(m3.group(1), m3.group(2), m3.group(3)).joinToString(" ") { it.capitalize() }
+        }
+
+        // 2-part names: e.g. rajukhan, alikhan, rahulkumar, amitsingh
+        val p2 = Pattern.compile("^(raju|rahul|amit|rohit|mohd|md|aman|vikas|vikram|priya|neha|pooja|anil|sunil|deepak|sanjay|ajay|vijay|rajesh|suresh|manoj|dinesh|santosh|pankaj|ashok|mukesh|kamlesh|sachin|vinod|harsh|ankit|tarun|sahil|ali|arif|asif|salman|aamir|shahrukh|irfan|farhan|zaheer|wasim|danish|adnan|faizan|sohail|sameer|rizwan|nadeem|imran|tariq|zubair|rehan|akash|abhishek|ayush|sourabh|shivam|subhash|prashant|gaurav|mayank|kunal|nikhil|vivek|mayur|alok|arun|varun|karan|chetan|naveen|praveen|rakesh|naresh|mahesh|umesh|hemant|jay|dev|ram|krishna|radhe|gopal|govind|madhav|vishnu|shiva|ganesh|surya|om)(khan|kumar|singh|sharma|verma|gupta|yadav|patel|das|roy|reddy|nair|joshi|bose|kaur|devi|ahmed|alam|ansari|hussain|sheikh|raza|mallick|tiwari|pandey|mishra|jha|shah|jain|agarwal|choudhury|chaudhary|malik|ali|begum|khatun|parveen|siddiqui|bano|akter|biwi|sen|ghosh|mukherjee|banerjee|chatterjee|dutta|pal|mitra|saha|biswas|paul|sarkar|mondal|rao|hegde|bhat|shetty|rai|gowda|naidu|pillai|menon|nambiar|iyer|iyengar|deshmukh|patil|pawar|kadam|shinde|gaikwad|jadhav|bhosale|sawant|chavan|more|salunkhe)$", Pattern.CASE_INSENSITIVE)
+        val m2 = p2.matcher(lower)
+        if (m2.find()) {
+            return listOf(m2.group(1), m2.group(2)).joinToString(" ") { it.capitalize() }
+        }
+
+        // Fallback: Title case single word
+        return cleaned.substring(0, 1).toUpperCase() + cleaned.substring(1).toLowerCase()
     }
 }
