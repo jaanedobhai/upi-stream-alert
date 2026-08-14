@@ -195,7 +195,7 @@ function showAlert(data) {
 
   if (config.enableTts) {
     const formattedAmt = Math.round(data.amount);
-    playTTS(`${name} donated ${formattedAmt} rupees on UPI!`);
+    playTTS(`${name} ne UPI pe ${formattedAmt} rupaye diye hain!`);
   }
 
   progressFillEl.style.transition = 'none';
