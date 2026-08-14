@@ -198,7 +198,7 @@ function showAlert(data) {
   // 2-second delay before TTS starts speaking
   if (config.enableTts) {
     const formattedAmt = Math.round(data.amount);
-    const speechText = `${name} ne ${formattedAmt} rupaye U.P.I. kiye hain!`;
+    const speechText = `${name} ne ${formattedAmt} rupees U.P.I. kiye hain!`;
     const ttsDelay = typeof config.ttsDelay !== 'undefined' ? parseInt(config.ttsDelay) * 1000 : 2000;
 
     setTimeout(() => {
