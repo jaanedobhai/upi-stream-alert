@@ -12,6 +12,8 @@ let config = {
   relayUrl: 'http://localhost:3000',
   alertDuration: 6000,
   enableTts: true,
+  ttsVoice: 'Brian', // Brian (UK), Raveena (Indian English), Aditi (Indian), Amy, Matthew, etc.
+  ttsVolume: 0.9,
   minAmount: 1,
   soundUrl: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'
 };
@@ -25,6 +27,8 @@ window.addEventListener('onWidgetLoad', function (obj) {
   if (fieldData.firebaseDbUrl) config.firebaseDbUrl = fieldData.firebaseDbUrl;
   if (fieldData.alertDuration) config.alertDuration = parseInt(fieldData.alertDuration) * 1000;
   if (typeof fieldData.enableTts !== 'undefined') config.enableTts = fieldData.enableTts;
+  if (fieldData.ttsVoice) config.ttsVoice = fieldData.ttsVoice;
+  if (fieldData.ttsVolume) config.ttsVolume = parseFloat(fieldData.ttsVolume) / 100;
   if (fieldData.soundUrl) config.soundUrl = fieldData.soundUrl;
 
   initConnection();
@@ -223,19 +227,42 @@ function playFallbackSynthSound() {
 }
 
 function playTTS(text) {
+  if (!config.enableTts || !text) return;
+
+  // 1. Try StreamElements Native Cloud Voice (Brian, Raveena, Aditi, etc.)
+  const voice = config.ttsVoice || 'Brian';
+  const cleanText = text.replace(/[\n\r]+/g, ' ').trim();
+  const seTtsUrl = `https://api.streamelements.com/kappa/v2/speech?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(cleanText)}`;
+
   try {
+    const ttsAudio = new Audio(seTtsUrl);
+    ttsAudio.volume = config.ttsVolume || 0.9;
+    ttsAudio.play().then(() => {
+      console.log(`[UPI Widget] Playing Native StreamElements TTS (${voice}): "${cleanText}"`);
+    }).catch(err => {
+      console.warn('[UPI Widget] StreamElements native TTS blocked, falling back to browser synthesis:', err);
+      playBrowserFallbackTTS(cleanText);
+    });
+  } catch (err) {
+    playBrowserFallbackTTS(cleanText);
+  }
+}
+
+function playBrowserFallbackTTS(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 1.0;
-    utterance.pitch = 1.1;
-    utterance.volume = 0.9;
+    utterance.pitch = 1.0;
+    utterance.volume = config.ttsVolume || 0.9;
     
     const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => v.lang.includes('en-IN') || v.lang.includes('en-US'));
+    const preferredVoice = voices.find(v => v.lang.includes('en-IN') || v.lang.includes('en-GB') || v.lang.includes('en-US'));
     if (preferredVoice) utterance.voice = preferredVoice;
     
     window.speechSynthesis.speak(utterance);
   } catch (err) {
-    console.log('TTS Error:', err);
+    console.error('Browser TTS failed:', err);
   }
 }
