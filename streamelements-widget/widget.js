@@ -13,7 +13,8 @@ let config = {
   relayUrl: 'http://localhost:3000',
   alertDuration: 6000,
   enableTts: true,
-  ttsVoice: 'Brian', // Brian, Raveena, Aditi, Amy, Matthew, etc.
+  ttsVoice: 'Kalpana', // Kalpana (Hindi Female), Raveena (Indian English), Brian (UK), etc.
+  ttsDelay: 2, // 2-second delay
   ttsVolume: 0.9,
   minAmount: 1,
   soundUrl: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'
@@ -30,6 +31,7 @@ window.addEventListener('onWidgetLoad', function (obj) {
   if (fieldData.alertDuration) config.alertDuration = parseInt(fieldData.alertDuration) * 1000;
   if (typeof fieldData.enableTts !== 'undefined') config.enableTts = fieldData.enableTts;
   if (fieldData.ttsVoice) config.ttsVoice = fieldData.ttsVoice;
+  if (typeof fieldData.ttsDelay !== 'undefined') config.ttsDelay = parseInt(fieldData.ttsDelay);
   if (fieldData.ttsVolume) config.ttsVolume = parseFloat(fieldData.ttsVolume) / 100;
   if (fieldData.soundUrl) config.soundUrl = fieldData.soundUrl;
 
@@ -193,9 +195,15 @@ function showAlert(data) {
 
   playAlertSound();
 
+  // 2-second delay before TTS starts speaking
   if (config.enableTts) {
     const formattedAmt = Math.round(data.amount);
-    playTTS(`${name} ne UPI pe ${formattedAmt} rupaye diye hain!`);
+    const speechText = `${name} ne UPI pe ${formattedAmt} rupaye diye hain!`;
+    const ttsDelay = typeof config.ttsDelay !== 'undefined' ? parseInt(config.ttsDelay) * 1000 : 2000;
+
+    setTimeout(() => {
+      playTTS(speechText);
+    }, ttsDelay);
   }
 
   progressFillEl.style.transition = 'none';
@@ -266,18 +274,25 @@ function playFallbackSynthSound() {
 function playTTS(text) {
   if (!config.enableTts || !text) return;
 
-  // 1. Try StreamElements Native Cloud Voice (Brian, Raveena, Aditi, etc.)
-  const voice = config.ttsVoice || 'Brian';
+  const voice = config.ttsVoice || 'Kalpana';
   const cleanText = text.replace(/[\n\r]+/g, ' ').trim();
-  const seTtsUrl = `https://api.streamelements.com/kappa/v2/speech?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(cleanText)}`;
+  
+  // 1. Kalpana Voice (Clear Natural Hindi Female Voice)
+  let ttsUrl = '';
+  if (voice.toLowerCase() === 'kalpana') {
+    ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=hi&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
+  } else {
+    // 2. StreamElements Cloud Voices (Brian, Raveena, Aditi, etc.)
+    ttsUrl = `https://api.streamelements.com/kappa/v2/speech?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(cleanText)}`;
+  }
 
   try {
-    const ttsAudio = new Audio(seTtsUrl);
+    const ttsAudio = new Audio(ttsUrl);
     ttsAudio.volume = config.ttsVolume || 0.9;
     ttsAudio.play().then(() => {
-      console.log(`[UPI Widget] Playing Native StreamElements TTS (${voice}): "${cleanText}"`);
+      console.log(`[UPI Widget] 🎙️ Playing TTS Voice (${voice}): "${cleanText}"`);
     }).catch(err => {
-      console.warn('[UPI Widget] StreamElements native TTS blocked, falling back to browser synthesis:', err);
+      console.warn('[UPI Widget] Cloud TTS blocked, falling back to browser synthesis:', err);
       playBrowserFallbackTTS(cleanText);
     });
   } catch (err) {

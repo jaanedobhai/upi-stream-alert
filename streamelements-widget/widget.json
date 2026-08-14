@@ -6,24 +6,31 @@
   },
   "enableTts": {
     "type": "checkbox",
-    "label": "Enable StreamElements Native TTS",
+    "label": "Enable TTS Voice",
     "value": true
   },
   "ttsVoice": {
     "type": "dropdown",
-    "label": "StreamElements TTS Voice",
-    "value": "Brian",
+    "label": "TTS Voice",
+    "value": "Kalpana",
     "options": {
-      "Brian": "Brian (UK English - Classic Streamer)",
-      "Raveena": "Raveena (Indian English - Female)",
-      "Aditi": "Aditi (Indian English / Hindi - Female)",
-      "Amy": "Amy (British English - Female)",
-      "Emma": "Emma (British English - Female)",
-      "Matthew": "Matthew (US English - Male)",
-      "Joanna": "Joanna (US English - Female)",
-      "Salli": "Salli (US English - Female)",
-      "Russell": "Russell (Australian - Male)"
+      "Kalpana": "🇮🇳 Kalpana (Natural Hindi Female - Classic Indian Streamer)",
+      "Raveena": "🇮🇳 Raveena (Indian English - Female)",
+      "Aditi": "🇮🇳 Aditi (Indian English / Hindi - Female)",
+      "Brian": "🇬🇧 Brian (UK English - Classic Streamer)",
+      "Amy": "🇬🇧 Amy (British English - Female)",
+      "Matthew": "🇺🇸 Matthew (US English - Male)",
+      "Joanna": "🇺🇸 Joanna (US English - Female)",
+      "Russell": "🇦🇺 Russell (Australian - Male)"
     }
+  },
+  "ttsDelay": {
+    "type": "number",
+    "label": "TTS Delay After Alert Appears (Seconds)",
+    "value": 2,
+    "min": 0,
+    "max": 10,
+    "step": 1
   },
   "ttsVolume": {
     "type": "slider",
@@ -36,7 +43,7 @@
   "alertDuration": {
     "type": "number",
     "label": "Alert Duration (Seconds)",
-    "value": 6,
+    "value": 7,
     "min": 2,
     "max": 30,
     "step": 1
