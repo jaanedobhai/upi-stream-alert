@@ -294,54 +294,46 @@ function playFallbackSynthSound() {
 function playTTS(text) {
   if (!config.enableTts || !text) return;
 
-  const voice = config.ttsVoice || 'Kalpana';
   const cleanText = text.replace(/[\n\r]+/g, ' ').trim();
-  
-  // 1. Kalpana Voice (Clear Natural Hindi Female Voice)
-  let ttsUrl = '';
-  if (voice.toLowerCase() === 'kalpana') {
-    ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=hi&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
-  } else {
-    // 2. StreamElements Cloud Voices (Brian, Raveena, Aditi, etc.)
-    ttsUrl = `https://api.streamelements.com/kappa/v2/speech?voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(cleanText)}`;
-  }
+  const kalpanaUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=hi&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
 
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (AudioContext) {
-      const ctx = new AudioContext();
-      const ttsAudio = new Audio();
-      ttsAudio.crossOrigin = "anonymous";
-      ttsAudio.src = ttsUrl;
+    const ctx = getAudioContext();
+    
+    if (ctx) {
+      const audio = new Audio();
+      audio.crossOrigin = "anonymous";
+      audio.src = kalpanaUrl;
 
-      const source = ctx.createMediaElementSource(ttsAudio);
+      const source = ctx.createMediaElementSource(audio);
       const gainNode = ctx.createGain();
       const compressor = ctx.createDynamicsCompressor();
-      
-      // 400% Volume Boost (4.0x Gain Multiplier)
+
+      // 400% Loud Boost
       gainNode.gain.setValueAtTime(4.0, ctx.currentTime);
 
       source.connect(compressor);
       compressor.connect(gainNode);
       gainNode.connect(ctx.destination);
 
-      ttsAudio.play().then(() => {
-        console.log(`[UPI Widget] 🎙️ Playing 400% Boosted TTS (${voice}): "${cleanText}"`);
+      audio.play().then(() => {
+        console.log(`[UPI Widget] 🎙️ Kalpana (Hindi) Voice Played: "${cleanText}"`);
       }).catch(err => {
-        const directAudio = new Audio(ttsUrl);
+        const directAudio = new Audio(kalpanaUrl);
         directAudio.volume = 1.0;
-        directAudio.play().catch(e => playBrowserFallbackTTS(cleanText));
+        directAudio.play().catch(e => console.error("Kalpana audio error:", e));
       });
       return;
     }
 
-    const directAudio = new Audio(ttsUrl);
+    const directAudio = new Audio(kalpanaUrl);
     directAudio.volume = 1.0;
-    directAudio.play().catch(e => playBrowserFallbackTTS(cleanText));
+    directAudio.play().catch(e => console.error("Kalpana audio error:", e));
   } catch (err) {
-    const directAudio = new Audio(ttsUrl);
+    const directAudio = new Audio(kalpanaUrl);
     directAudio.volume = 1.0;
-    directAudio.play().catch(e => playBrowserFallbackTTS(cleanText));
+    directAudio.play().catch(e => console.error("Kalpana audio error:", e));
   }
 }
 
