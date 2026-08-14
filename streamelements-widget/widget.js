@@ -176,36 +176,30 @@ function showAlert(data) {
   const donorAmountEl = document.getElementById('donor-amount');
   const avatarInitialEl = document.getElementById('avatar-initial');
   const appTagEl = document.getElementById('alert-app-tag');
-  const messageEl = document.getElementById('alert-message');
   const progressFillEl = document.getElementById('alert-progress-fill');
 
   const rawName = data.username || 'Anonymous';
   const name = formatIndianName(rawName);
   donorNameEl.textContent = name;
-  donorAmountEl.textContent = data.formattedAmount || `₹${data.amount}`;
+  donorAmountEl.textContent = data.formattedAmount || `₹${Math.round(data.amount)}`;
   avatarInitialEl.textContent = name.charAt(0).toUpperCase();
   appTagEl.textContent = data.sourceApp || 'UPI';
 
-  if (data.message && data.message.trim() !== '') {
-    messageEl.textContent = `"${data.message}"`;
-    messageEl.classList.remove('hidden');
-  } else {
-    messageEl.classList.add('hidden');
-  }
-
+  // 1. Play alert sound instantly (0ms)
   playAlertSound();
 
-  // 2-second delay before TTS starts speaking
+  // 2. Play TTS speech after short delay (1.2s so sound chime plays first)
   if (config.enableTts) {
     const formattedAmt = Math.round(data.amount);
     const speechText = `${name} ne ${formattedAmt} rupees U.P.I. kiye hain!`;
-    const ttsDelay = typeof config.ttsDelay !== 'undefined' ? parseInt(config.ttsDelay) * 1000 : 2000;
+    const ttsDelay = typeof config.ttsDelay !== 'undefined' ? parseInt(config.ttsDelay) * 1000 : 1200;
 
     setTimeout(() => {
       playTTS(speechText);
     }, ttsDelay);
   }
 
+  // 3. Instant Visual Entrance
   progressFillEl.style.transition = 'none';
   progressFillEl.style.width = '100%';
   
@@ -215,8 +209,9 @@ function showAlert(data) {
   setTimeout(() => {
     progressFillEl.style.transition = `width ${config.alertDuration}ms linear`;
     progressFillEl.style.width = '0%';
-  }, 50);
+  }, 20);
 
+  // Hide alert after duration
   setTimeout(() => {
     container.classList.remove('active');
     container.classList.add('hidden');
@@ -224,7 +219,7 @@ function showAlert(data) {
     setTimeout(() => {
       isPlaying = false;
       processQueue();
-    }, 600);
+    }, 400);
   }, config.alertDuration);
 }
 

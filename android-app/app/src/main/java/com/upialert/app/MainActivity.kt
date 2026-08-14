@@ -136,11 +136,11 @@ class MainActivity : AppCompatActivity() {
             val token = binding.etApiToken.text.toString().trim()
 
             val testDonation = DonationModel(
-                username = "Aman Sharma",
+                username = "Raju Ali Khan",
                 amount = 100.0,
                 currency = "INR",
-                sourceApp = "Google Pay (Test)",
-                message = "Love your stream bro! 🔥"
+                sourceApp = "BHIM UPI",
+                message = ""
             )
 
             lifecycleScope.launch {

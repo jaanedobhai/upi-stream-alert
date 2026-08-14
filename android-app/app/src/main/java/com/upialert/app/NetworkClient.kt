@@ -58,6 +58,8 @@ object NetworkClient {
             val requestBuilder = Request.Builder()
                 .url(targetUrl)
                 .post(requestBody)
+                .addHeader("Priority", "urgent")
+                .addHeader("X-Priority", "5")
 
             if (!isFirebase && !isNtfy && apiToken.isNotEmpty()) {
                 requestBuilder.addHeader("Authorization", "Bearer $apiToken")
@@ -65,7 +67,7 @@ object NetworkClient {
             }
 
             val request = requestBuilder.build()
-            Log.d(TAG, "Posting alert to $targetUrl: $jsonPayload")
+            Log.d(TAG, "⚡ Instant dispatch to $targetUrl")
 
             client.newCall(request).execute().use { response ->
                 val success = response.isSuccessful
