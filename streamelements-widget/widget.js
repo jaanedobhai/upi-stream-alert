@@ -7,9 +7,9 @@ let lastAlertTimestamp = Date.now();
 
 // Configuration defaults
 let config = {
-  connectionMode: 'websocket', // 'websocket' (Render/Cloud URL) or 'firebase'
-  relayUrl: 'https://your-app.onrender.com',
-  firebaseDbUrl: '', // e.g. https://your-app-default-rtdb.firebaseio.com
+  connectionMode: 'firebase', // 'firebase' (100% Serverless) or 'websocket'
+  firebaseDbUrl: 'https://YOUR-PROJECT-ID-default-rtdb.firebaseio.com',
+  relayUrl: 'http://localhost:3000',
   alertDuration: 6000,
   enableTts: true,
   minAmount: 1,
