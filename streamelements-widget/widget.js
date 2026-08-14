@@ -228,38 +228,38 @@ function showAlert(data) {
   }, config.alertDuration);
 }
 
+let globalAudioCtx = null;
+function getAudioContext() {
+  if (!globalAudioCtx) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+      globalAudioCtx = new AudioContext();
+    }
+  }
+  if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+    globalAudioCtx.resume().catch(e => {});
+  }
+  return globalAudioCtx;
+}
+
+// Unlock audio on first interaction in preview
+document.addEventListener('click', () => {
+  getAudioContext();
+});
+
 function playAlertSound() {
   try {
+    const ctx = getAudioContext();
     if (config.soundUrl) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) {
-        const ctx = new AudioContext();
-        const audio = new Audio();
-        audio.crossOrigin = "anonymous";
-        audio.src = config.soundUrl;
-
-        const source = ctx.createMediaElementSource(audio);
-        const gainNode = ctx.createGain();
-        const compressor = ctx.createDynamicsCompressor();
-
-        // 400% Volume Boost (4.0x Gain)
-        gainNode.gain.setValueAtTime(4.0, ctx.currentTime);
-
-        source.connect(compressor);
-        compressor.connect(gainNode);
-        gainNode.connect(ctx.destination);
-
-        audio.play().catch(e => {
-          const direct = new Audio(config.soundUrl);
-          direct.volume = 1.0;
-          direct.play().catch(err => playFallbackSynthSound());
-        });
-        return;
-      }
-
+      // Direct high-volume play for guaranteed preview & live playback
       const audio = new Audio(config.soundUrl);
       audio.volume = 1.0;
-      audio.play().catch(e => playFallbackSynthSound());
+      audio.play().then(() => {
+        console.log('[UPI Widget] Alert sound played successfully');
+      }).catch(e => {
+        console.warn('[UPI Widget] Direct audio failed, using synth chime:', e);
+        playFallbackSynthSound();
+      });
     } else {
       playFallbackSynthSound();
     }
@@ -270,11 +270,10 @@ function playAlertSound() {
 
 function playFallbackSynthSound() {
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
-    const notes = [523.25, 659.25, 783.99, 1046.50];
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
     notes.forEach((freq, index) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -283,7 +282,6 @@ function playFallbackSynthSound() {
       osc.frequency.value = freq;
 
       const startTime = ctx.currentTime + index * 0.1;
-      // 400% Boosted Synth
       gain.gain.setValueAtTime(1.0, startTime);
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
 
