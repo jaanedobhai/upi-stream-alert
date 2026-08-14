@@ -192,8 +192,9 @@ function showAlert(data) {
 
   playAlertSound();
 
-  if (config.enableTts && 'speechSynthesis' in window) {
-    playTTS(`${name} donated ${data.amount} rupees on UPI!`);
+  if (config.enableTts) {
+    const formattedAmt = Math.round(data.amount);
+    playTTS(`${name} donated ${formattedAmt} rupees on UPI!`);
   }
 
   progressFillEl.style.transition = 'none';
