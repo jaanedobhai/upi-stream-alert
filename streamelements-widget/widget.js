@@ -231,8 +231,34 @@ function showAlert(data) {
 function playAlertSound() {
   try {
     if (config.soundUrl) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        const ctx = new AudioContext();
+        const audio = new Audio();
+        audio.crossOrigin = "anonymous";
+        audio.src = config.soundUrl;
+
+        const source = ctx.createMediaElementSource(audio);
+        const gainNode = ctx.createGain();
+        const compressor = ctx.createDynamicsCompressor();
+
+        // 400% Volume Boost (4.0x Gain)
+        gainNode.gain.setValueAtTime(4.0, ctx.currentTime);
+
+        source.connect(compressor);
+        compressor.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        audio.play().catch(e => {
+          const direct = new Audio(config.soundUrl);
+          direct.volume = 1.0;
+          direct.play().catch(err => playFallbackSynthSound());
+        });
+        return;
+      }
+
       const audio = new Audio(config.soundUrl);
-      audio.volume = 0.8;
+      audio.volume = 1.0;
       audio.play().catch(e => playFallbackSynthSound());
     } else {
       playFallbackSynthSound();
@@ -257,7 +283,8 @@ function playFallbackSynthSound() {
       osc.frequency.value = freq;
 
       const startTime = ctx.currentTime + index * 0.1;
-      gain.gain.setValueAtTime(0.3, startTime);
+      // 400% Boosted Synth
+      gain.gain.setValueAtTime(1.0, startTime);
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
 
       osc.connect(gain);
@@ -296,17 +323,18 @@ function playTTS(text) {
 
       const source = ctx.createMediaElementSource(ttsAudio);
       const gainNode = ctx.createGain();
+      const compressor = ctx.createDynamicsCompressor();
       
-      // 200% Volume Boost (2.0x Gain)
-      gainNode.gain.setValueAtTime(2.0, ctx.currentTime);
+      // 400% Volume Boost (4.0x Gain Multiplier)
+      gainNode.gain.setValueAtTime(4.0, ctx.currentTime);
 
-      source.connect(gainNode);
+      source.connect(compressor);
+      compressor.connect(gainNode);
       gainNode.connect(ctx.destination);
 
       ttsAudio.play().then(() => {
-        console.log(`[UPI Widget] 🎙️ Playing 200% Boosted TTS (${voice}): "${cleanText}"`);
+        console.log(`[UPI Widget] 🎙️ Playing 400% Boosted TTS (${voice}): "${cleanText}"`);
       }).catch(err => {
-        // Fallback without Web Audio routing if browser policy limits
         const directAudio = new Audio(ttsUrl);
         directAudio.volume = 1.0;
         directAudio.play().catch(e => playBrowserFallbackTTS(cleanText));
