@@ -358,27 +358,77 @@ function playBrowserFallbackTTS(text) {
 
 function formatIndianName(raw) {
   if (!raw) return "Anonymous";
-  let name = raw.trim().replace(/[\(\)\[\]]/g, "").trim();
+  let name = raw.trim()
+    .replace(/\(.*?\)/g, "")
+    .replace(/[\[\]{}<>]/g, "")
+    .replace(/[._\-+@/\\#]/g, " ")
+    .trim();
 
-  // If already contains spaces, just title case
+  // 1. Convert PascalCase / CamelCase (e.g. RajuAliKhan, AmanSharma, TechnicalGuruji)
+  name = name.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2");
+
+  // If already separated by spaces, capitalize each word
   if (name.includes(" ")) {
-    return name.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+    return name.split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
   }
 
-  // Segment joined names like RAJUALIKHAN, RAHULKUMAR, AMITSINGH
+  // 2. Universal Unspaced compound names (e.g. RAJUALIKHAN, ROHITSHARMA, VIRATKOHLI, HARSHITGUPTA)
   const lower = name.toLowerCase();
   
-  const patterns = [
-    // 3 parts: e.g. rajualikhan
-    /^(raju|rahul|amit|rohit|mohd|md|aman|vikas|vikram|priya|neha|pooja|anil|sunil|deepak|sanjay|ajay|vijay|rajesh|suresh|manoj|dinesh|santosh|pankaj|ashok|mukesh|kamlesh|sachin|vinod|dhanraj|harsh|ankit|tarun|sahil)(ali|kumar|singh|raj|chand|nath|kant|lal|ram|dev|das|pal)(khan|sharma|verma|gupta|yadav|singh|patel|kumar|das|roy|reddy|nair|joshi|bose|kaur|devi|ahmed|alam|ansari|hussain|sheikh|raza|mallick|tiwari|pandey|mishra|jha|shah|jain|agarwal|choudhury|chaudhary|malik)$/i,
-    // 2 parts: e.g. rajukhan, alikhan, rahulkumar, amitsingh
-    /^(raju|rahul|amit|rohit|mohd|md|aman|vikas|vikram|priya|neha|pooja|anil|sunil|deepak|sanjay|ajay|vijay|rajesh|suresh|manoj|dinesh|santosh|pankaj|ashok|mukesh|kamlesh|sachin|vinod|harsh|ankit|tarun|sahil|ali|arif|asif|salman|aamir|shahrukh|irfan|farhan|zaheer|wasim|danish|adnan|faizan|sohail|sameer|rizwan|nadeem|imran|tariq|zubair|rehan|akash|abhishek|ayush|sourabh|shivam|subhash|prashant|gaurav|mayank|kunal|nikhil|vivek|mayur|alok|arun|varun|karan|chetan|naveen|praveen|rakesh|naresh|mahesh|umesh|hemant|jay|dev|ram|krishna|radhe|gopal|govind|madhav|vishnu|shiva|ganesh|surya|om)(khan|kumar|singh|sharma|verma|gupta|yadav|patel|das|roy|reddy|nair|joshi|bose|kaur|devi|ahmed|alam|ansari|hussain|sheikh|raza|mallick|tiwari|pandey|mishra|jha|shah|jain|agarwal|choudhury|chaudhary|malik|ali|begum|khatun|parveen|siddiqui|bano|akter|biwi|sen|ghosh|mukherjee|banerjee|chatterjee|dutta|pal|mitra|saha|biswas|paul|sarkar|mondal|rao|hegde|bhat|shetty|rai|gowda|naidu|pillai|menon|nambiar|iyer|iyengar|deshmukh|patil|pawar|kadam|shinde|gaikwad|jadhav|bhosale|sawant|chavan|more|salunkhe)$/i
+  const dict = [
+    // Surnames / Endings
+    "sharma", "verma", "gupta", "singh", "kumar", "khan", "patel", "yadav", "mishra", "pandey", "tiwari", 
+    "dubey", "shukla", "tripathi", "pathak", "chaubey", "dwivedi", "jha", "mandal", "paswan", "thakur", 
+    "chaudhary", "choudhury", "malik", "mallick", "ansari", "ahmed", "ahmad", "hussain", "husain", "sheikh", 
+    "shaikh", "alam", "raza", "khatun", "khatoon", "parveen", "begum", "siddiqui", "bano", "akhtar", 
+    "shah", "jain", "agarwal", "agrawal", "mittal", "bansal", "goyal", "saxena", "bhatnagar", "srivastava", 
+    "mathur", "kulshrestha", "rastogi", "nigam", "sinha", "ghosh", "mukherjee", "banerjee", "chatterjee", 
+    "ganguly", "bhattacharya", "pal", "chandra", "dutta", "chakraborty", "mitra", "sengupta", "dasgupta", 
+    "majumdar", "bhowmick", "saha", "halder", "barman", "paul", "biswas", "roy", "ray", "sarkar", "mondal", 
+    "adiga", "rao", "murthy", "hegde", "bhat", "shetty", "rai", "gowda", "naidu", "chowdary", "reddy", 
+    "nair", "pillai", "menon", "kurup", "panicker", "nambiar", "iyer", "iyengar", "deshmukh", "patil", 
+    "pawar", "kadam", "shinde", "gaikwad", "chavan", "more", "salunkhe", "jadhav", "bhosale", "sawant", 
+    "kohli", "pandya", "gill", "jaiswal", "pant", "dhoni", "rahane", "pujara", "ashwin", "bumrah", "shami", 
+    "siraj", "kuldeep", "chahal", "tewatia", "samson", "kishan", "rathi", "badoni", "varma", "mehta", 
+    "joshi", "bose", "kaur", "devi", "prasad", "prakash", "narayan", "swamy", "swami", "nathan", "mani",
+    
+    // Middle components / Connectors
+    "ali", "kumar", "singh", "raj", "chand", "chandra", "nath", "kant", "lal", "ram", "dev", "das", "pal", 
+    "deep", "preet", "meet", "jeet", "inder", "ender", "wati", "rani", "sen",
+    
+    // First names / Prefixes
+    "raju", "rahul", "amit", "rohit", "mohd", "md", "syed", "aman", "vikas", "vikram", "priya", "neha", 
+    "pooja", "anil", "sunil", "deepak", "sanjay", "ajay", "vijay", "rajesh", "suresh", "manoj", "dinesh", 
+    "santosh", "pankaj", "ashok", "mukesh", "kamlesh", "sachin", "vinod", "dhanraj", "harsh", "harshit", 
+    "ankit", "tarun", "sahil", "akash", "abhishek", "ayush", "sourabh", "saurabh", "shivam", "subhash", 
+    "prashant", "gaurav", "mayank", "kunal", "nikhil", "vivek", "mayur", "alok", "arun", "varun", "karan", 
+    "chetan", "naveen", "praveen", "rakesh", "naresh", "mahesh", "umesh", "hemant", "jay", "dev", "ram", 
+    "krishna", "radhe", "gopal", "govind", "madhav", "vishnu", "shiva", "ganesh", "surya", "om", "arif", 
+    "asif", "salman", "aamir", "amir", "shahrukh", "irfan", "farhan", "zaheer", "wasim", "danish", "adnan", 
+    "faizan", "sohail", "suhail", "sameer", "samir", "rizwan", "nadeem", "imran", "tariq", "zubair", 
+    "rehan", "virat", "hardik", "rishabh", "shubman", "yashasvi", "sanju", "ishan", "jasprit", "mohammed", 
+    "ravindra", "kl", "surya", "tilak", "axar", "shreyas", "ruturaj", "sarfaraz", "yuvraj", "gautam", 
+    "virender", "sourav", "kapil", "sunil", "ravi", "anil", "zaheer", "harbhajan", "ashish", "munaf", 
+    "bhuvneshwar", "umesh", "ishant", "deepak", "shardul", "prasidh", "arshdeep", "mukesh", "yuzvendra", 
+    "ravi", "kuldeep", "varun", "washington", "shahbaz", "krunal", "venkatesh", "rahul", "nitish", "riyan"
   ];
 
-  for (const regex of patterns) {
-    const match = lower.match(regex);
-    if (match) {
-      return match.slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+  for (let i = 3; i <= lower.length - 3; i++) {
+    const p1 = lower.substring(0, i);
+    const rest = lower.substring(i);
+
+    // 3 parts (first + middle + last)
+    for (let j = 2; j <= rest.length - 2; j++) {
+      const p2 = rest.substring(0, j);
+      const p3 = rest.substring(j);
+      if (dict.includes(p1) && dict.includes(p2) && dict.includes(p3)) {
+        return [p1, p2, p3].map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+      }
+    }
+
+    // 2 parts (first + last)
+    if (dict.includes(p1) && dict.includes(rest)) {
+      return [p1, rest].map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
     }
   }
 

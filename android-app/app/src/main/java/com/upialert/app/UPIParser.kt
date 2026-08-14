@@ -184,10 +184,14 @@ object UPIParser {
             .replace(Regex("(?i)\\s+via\\s+.*"), "")
             .replace(Regex("(?i)\\s+UPI.*"), "")
             .replace(Regex("(?i)\\s+ref.*"), "")
-            .replace(Regex("[.,;!]$"), "")
+            .replace(Regex("[.,;!_\\-+]"), " ")
             .trim()
 
         if (cleaned.isEmpty()) return "UPI Supporter"
+
+        // Handle PascalCase / CamelCase (e.g. RajuAliKhan -> Raju Ali Khan)
+        cleaned = cleaned.replace(Regex("([a-z])([A-Z])"), "$1 $2")
+            .replace(Regex("([A-Z]+)([A-Z][a-z])"), "$1 $2")
 
         // If name already contains spaces, format as Title Case
         if (cleaned.contains(" ")) {
@@ -197,21 +201,54 @@ object UPIParser {
             }
         }
 
-        // Segment unspaced compound Indian names (e.g. RAJUALIKHAN -> Raju Ali Khan, RAHULKUMAR -> Rahul Kumar)
+        // Universal dictionary tokenizer for unspaced compound names
         val lower = cleaned.toLowerCase()
+        val dict = setOf(
+            "sharma", "verma", "gupta", "singh", "kumar", "khan", "patel", "yadav", "mishra", "pandey", "tiwari", 
+            "dubey", "shukla", "tripathi", "pathak", "chaubey", "dwivedi", "jha", "mandal", "paswan", "thakur", 
+            "chaudhary", "choudhury", "malik", "mallick", "ansari", "ahmed", "ahmad", "hussain", "husain", "sheikh", 
+            "shaikh", "alam", "raza", "khatun", "khatoon", "parveen", "begum", "siddiqui", "bano", "akhtar", 
+            "shah", "jain", "agarwal", "agrawal", "mittal", "bansal", "goyal", "saxena", "bhatnagar", "srivastava", 
+            "mathur", "kulshrestha", "rastogi", "nigam", "sinha", "ghosh", "mukherjee", "banerjee", "chatterjee", 
+            "ganguly", "bhattacharya", "pal", "chandra", "dutta", "chakraborty", "mitra", "sengupta", "dasgupta", 
+            "majumdar", "bhowmick", "saha", "halder", "barman", "paul", "biswas", "roy", "ray", "sarkar", "mondal", 
+            "adiga", "rao", "murthy", "hegde", "bhat", "shetty", "rai", "gowda", "naidu", "chowdary", "reddy", 
+            "nair", "pillai", "menon", "kurup", "panicker", "nambiar", "iyer", "iyengar", "deshmukh", "patil", 
+            "pawar", "kadam", "shinde", "gaikwad", "chavan", "more", "salunkhe", "jadhav", "bhosale", "sawant", 
+            "kohli", "pandya", "gill", "jaiswal", "pant", "dhoni", "rahane", "pujara", "ashwin", "bumrah", "shami", 
+            "siraj", "kuldeep", "chahal", "tewatia", "samson", "kishan", "rathi", "badoni", "varma", "mehta", 
+            "joshi", "bose", "kaur", "devi", "prasad", "prakash", "narayan", "swamy", "swami", "nathan", "mani",
+            "ali", "kumar", "singh", "raj", "chand", "chandra", "nath", "kant", "lal", "ram", "dev", "das", "pal", 
+            "deep", "preet", "meet", "jeet", "inder", "ender", "wati", "rani", "sen",
+            "raju", "rahul", "amit", "rohit", "mohd", "md", "syed", "aman", "vikas", "vikram", "priya", "neha", 
+            "pooja", "anil", "sunil", "deepak", "sanjay", "ajay", "vijay", "rajesh", "suresh", "manoj", "dinesh", 
+            "santosh", "pankaj", "ashok", "mukesh", "kamlesh", "sachin", "vinod", "dhanraj", "harsh", "harshit", 
+            "ankit", "tarun", "sahil", "akash", "abhishek", "ayush", "sourabh", "saurabh", "shivam", "subhash", 
+            "prashant", "gaurav", "mayank", "kunal", "nikhil", "vivek", "mayur", "alok", "arun", "varun", "karan", 
+            "chetan", "naveen", "praveen", "rakesh", "naresh", "mahesh", "umesh", "hemant", "jay", "dev", "ram", 
+            "krishna", "radhe", "gopal", "govind", "madhav", "vishnu", "shiva", "ganesh", "surya", "om", "arif", 
+            "asif", "salman", "aamir", "amir", "shahrukh", "irfan", "farhan", "zaheer", "wasim", "danish", "adnan", 
+            "faizan", "sohail", "suhail", "sameer", "samir", "rizwan", "nadeem", "imran", "tariq", "zubair", 
+            "rehan", "virat", "hardik", "rishabh", "shubman", "yashasvi", "sanju", "ishan", "jasprit", "mohammed"
+        )
 
-        // 3-part names: e.g. rajualikhan, mohdalikhan, rahulkrishnasingh
-        val p3 = Pattern.compile("^(raju|rahul|amit|rohit|mohd|md|aman|vikas|vikram|priya|neha|pooja|anil|sunil|deepak|sanjay|ajay|vijay|rajesh|suresh|manoj|dinesh|santosh|pankaj|ashok|mukesh|kamlesh|sachin|vinod|dhanraj|harsh|ankit|tarun|sahil)(ali|kumar|singh|raj|chand|nath|kant|lal|ram|dev|das|pal)(khan|sharma|verma|gupta|yadav|singh|patel|kumar|das|roy|reddy|nair|joshi|bose|kaur|devi|ahmed|alam|ansari|hussain|sheikh|raza|mallick|tiwari|pandey|mishra|jha|shah|jain|agarwal|choudhury|chaudhary|malik)$", Pattern.CASE_INSENSITIVE)
-        val m3 = p3.matcher(lower)
-        if (m3.find()) {
-            return listOf(m3.group(1), m3.group(2), m3.group(3)).joinToString(" ") { it.capitalize() }
-        }
+        for (i in 3..(lower.length - 3)) {
+            val p1 = lower.substring(0, i)
+            val rest = lower.substring(i)
 
-        // 2-part names: e.g. rajukhan, alikhan, rahulkumar, amitsingh
-        val p2 = Pattern.compile("^(raju|rahul|amit|rohit|mohd|md|aman|vikas|vikram|priya|neha|pooja|anil|sunil|deepak|sanjay|ajay|vijay|rajesh|suresh|manoj|dinesh|santosh|pankaj|ashok|mukesh|kamlesh|sachin|vinod|harsh|ankit|tarun|sahil|ali|arif|asif|salman|aamir|shahrukh|irfan|farhan|zaheer|wasim|danish|adnan|faizan|sohail|sameer|rizwan|nadeem|imran|tariq|zubair|rehan|akash|abhishek|ayush|sourabh|shivam|subhash|prashant|gaurav|mayank|kunal|nikhil|vivek|mayur|alok|arun|varun|karan|chetan|naveen|praveen|rakesh|naresh|mahesh|umesh|hemant|jay|dev|ram|krishna|radhe|gopal|govind|madhav|vishnu|shiva|ganesh|surya|om)(khan|kumar|singh|sharma|verma|gupta|yadav|patel|das|roy|reddy|nair|joshi|bose|kaur|devi|ahmed|alam|ansari|hussain|sheikh|raza|mallick|tiwari|pandey|mishra|jha|shah|jain|agarwal|choudhury|chaudhary|malik|ali|begum|khatun|parveen|siddiqui|bano|akter|biwi|sen|ghosh|mukherjee|banerjee|chatterjee|dutta|pal|mitra|saha|biswas|paul|sarkar|mondal|rao|hegde|bhat|shetty|rai|gowda|naidu|pillai|menon|nambiar|iyer|iyengar|deshmukh|patil|pawar|kadam|shinde|gaikwad|jadhav|bhosale|sawant|chavan|more|salunkhe)$", Pattern.CASE_INSENSITIVE)
-        val m2 = p2.matcher(lower)
-        if (m2.find()) {
-            return listOf(m2.group(1), m2.group(2)).joinToString(" ") { it.capitalize() }
+            // 3 parts
+            for (j in 2..(rest.length - 2)) {
+                val p2 = rest.substring(0, j)
+                val p3 = rest.substring(j)
+                if (dict.contains(p1) && dict.contains(p2) && dict.contains(p3)) {
+                    return listOf(p1, p2, p3).joinToString(" ") { it.capitalize() }
+                }
+            }
+
+            // 2 parts
+            if (dict.contains(p1) && dict.contains(rest)) {
+                return listOf(p1, rest).joinToString(" ") { it.capitalize() }
+            }
         }
 
         // Fallback: Title case single word
