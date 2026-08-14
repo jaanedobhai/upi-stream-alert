@@ -11,7 +11,7 @@ let config = {
   cloudChannelUrl: 'https://ntfy.sh/upi_alert_jaanedobhai_live',
   firebaseDbUrl: '',
   relayUrl: 'http://localhost:3000',
-  alertDuration: 6000,
+  alertDuration: 8000,
   enableTts: true,
   ttsVoice: 'Kalpana', // Kalpana (Hindi Female), Raveena (Indian English), Brian (UK), etc.
   ttsDelay: 2, // 2-second delay
