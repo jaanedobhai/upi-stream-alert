@@ -71,12 +71,20 @@ let lastChatSentTime = 0;
  */
 async function sendChatThankYouMessage(name, amount) {
   try {
+    // 1. If running inside StreamElements Editor Preview Iframe, skip chat POST
+    // (This prevents Chrome Editor + OBS Studio from sending 2 duplicate messages)
+    const isEditorPreview = (window.self !== window.top);
+    if (isEditorPreview) {
+      console.log('[UPI Widget] ℹ️ StreamElements Editor iframe detected: Skipping chat POST (OBS Live Stream handles the single broadcast).');
+      return;
+    }
+
     const alertKey = `${name}_${amount}`;
     const now = Date.now();
 
-    // 8-second deduplication: Never send exact same alert twice
-    if (alertKey === lastChatSentAlertKey && (now - lastChatSentTime) < 8000) {
-      console.log('[UPI Widget] Duplicate chat alert skipped within 8s window.');
+    // 10-second deduplication: Never send exact same alert twice
+    if (alertKey === lastChatSentAlertKey && (now - lastChatSentTime) < 10000) {
+      console.log('[UPI Widget] Duplicate chat alert skipped within 10s window.');
       return;
     }
     lastChatSentAlertKey = alertKey;
