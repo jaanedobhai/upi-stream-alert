@@ -308,15 +308,38 @@ function playAlertSound() {
   try {
     const ctx = getAudioContext();
     if (config.soundUrl) {
-      // Direct high-volume play for guaranteed preview & live playback
+      if (ctx) {
+        const audio = new Audio();
+        audio.crossOrigin = "anonymous";
+        audio.src = config.soundUrl;
+
+        const source = ctx.createMediaElementSource(audio);
+        const gainNode = ctx.createGain();
+        const compressor = ctx.createDynamicsCompressor();
+
+        // 600% Volume Boost (6.0x Gain)
+        gainNode.gain.setValueAtTime(6.0, ctx.currentTime);
+        compressor.threshold.setValueAtTime(-24, ctx.currentTime);
+        compressor.knee.setValueAtTime(30, ctx.currentTime);
+        compressor.ratio.setValueAtTime(12, ctx.currentTime);
+
+        source.connect(compressor);
+        compressor.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        audio.play().then(() => {
+          console.log('[UPI Widget] 600% Alert sound played successfully');
+        }).catch(e => {
+          const direct = new Audio(config.soundUrl);
+          direct.volume = 1.0;
+          direct.play().catch(err => playFallbackSynthSound());
+        });
+        return;
+      }
+
       const audio = new Audio(config.soundUrl);
       audio.volume = 1.0;
-      audio.play().then(() => {
-        console.log('[UPI Widget] Alert sound played successfully');
-      }).catch(e => {
-        console.warn('[UPI Widget] Direct audio failed, using synth chime:', e);
-        playFallbackSynthSound();
-      });
+      audio.play().catch(e => playFallbackSynthSound());
     } else {
       playFallbackSynthSound();
     }
@@ -339,7 +362,8 @@ function playFallbackSynthSound() {
       osc.frequency.value = freq;
 
       const startTime = ctx.currentTime + index * 0.1;
-      gain.gain.setValueAtTime(1.0, startTime);
+      // 600% Boosted Synth
+      gain.gain.setValueAtTime(1.5, startTime);
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
 
       osc.connect(gain);
@@ -372,15 +396,18 @@ function playTTS(text) {
       const gainNode = ctx.createGain();
       const compressor = ctx.createDynamicsCompressor();
 
-      // 400% Loud Boost
-      gainNode.gain.setValueAtTime(4.0, ctx.currentTime);
+      // 600% Loud Boost (6.0x Gain Multiplier)
+      gainNode.gain.setValueAtTime(6.0, ctx.currentTime);
+      compressor.threshold.setValueAtTime(-24, ctx.currentTime);
+      compressor.knee.setValueAtTime(30, ctx.currentTime);
+      compressor.ratio.setValueAtTime(12, ctx.currentTime);
 
       source.connect(compressor);
       compressor.connect(gainNode);
       gainNode.connect(ctx.destination);
 
       audio.play().then(() => {
-        console.log(`[UPI Widget] 🎙️ Kalpana (Hindi) Voice Played: "${cleanText}"`);
+        console.log(`[UPI Widget] 🎙️ 600% Boosted Kalpana (Hindi) Voice Played: "${cleanText}"`);
       }).catch(err => {
         const directAudio = new Audio(kalpanaUrl);
         directAudio.volume = 1.0;
