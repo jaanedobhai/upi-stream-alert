@@ -19,7 +19,7 @@ let config = {
   minAmount: 1,
   soundUrl: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3',
   enableChatBot: true,
-  chatMessageFormat: '[username] thanks for the ₹[amount] UPI boss😎😎. [username] op guys🍻🍻',
+  chatMessageFormat: '_[username]_ thanks for the ₹[amount] UPI boss😎😎. _[username]_ op guys🍻🍻',
   nightbotToken: '',
   seJwtToken: '',
   seChannelId: ''

@@ -12,7 +12,7 @@
   "chatMessageFormat": {
     "type": "text",
     "label": "Live Chat Thank-You Message Template",
-    "value": "[username] thanks for the ₹[amount] UPI boss😎😎. [username] op guys🍻🍻"
+    "value": "_[username]_ thanks for the ₹[amount] UPI boss😎😎. _[username]_ op guys🍻🍻"
   },
   "seJwtToken": {
     "type": "text",
