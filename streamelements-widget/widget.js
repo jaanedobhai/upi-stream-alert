@@ -17,13 +17,20 @@ let config = {
   ttsDelay: 2, // 2-second delay
   ttsVolume: 0.9,
   minAmount: 1,
-  soundUrl: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'
+  soundUrl: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3',
+  enableChatBot: true,
+  chatMessageFormat: '[username] thanks for the ₹[amount] UPI boss😎😎. [username] op guys🍻🍻',
+  nightbotToken: '',
+  seJwtToken: '',
+  seChannelId: ''
 };
 
 // StreamElements native initialization event
 window.addEventListener('onWidgetLoad', function (obj) {
   const fieldData = obj.detail.fieldData || {};
+  const channel = obj.detail.channel || {};
   
+  if (channel.id) config.seChannelId = channel.id;
   if (fieldData.cloudChannelUrl) config.cloudChannelUrl = fieldData.cloudChannelUrl;
   if (fieldData.connectionMode) config.connectionMode = fieldData.connectionMode;
   if (fieldData.firebaseDbUrl) config.firebaseDbUrl = fieldData.firebaseDbUrl;
@@ -34,9 +41,58 @@ window.addEventListener('onWidgetLoad', function (obj) {
   if (typeof fieldData.ttsDelay !== 'undefined') config.ttsDelay = parseInt(fieldData.ttsDelay);
   if (fieldData.ttsVolume) config.ttsVolume = parseFloat(fieldData.ttsVolume) / 100;
   if (fieldData.soundUrl) config.soundUrl = fieldData.soundUrl;
+  if (typeof fieldData.enableChatBot !== 'undefined') config.enableChatBot = fieldData.enableChatBot;
+  if (fieldData.chatMessageFormat) config.chatMessageFormat = fieldData.chatMessageFormat;
+  if (fieldData.nightbotToken) config.nightbotToken = fieldData.nightbotToken;
+  if (fieldData.seJwtToken) config.seJwtToken = fieldData.seJwtToken;
 
   initConnection();
 });
+
+/**
+ * Sends automated chat message to YouTube/Twitch live chat via StreamElements Bot or Nightbot
+ */
+function sendChatThankYouMessage(name, amount) {
+  try {
+    const template = config.chatMessageFormat || '[username] thanks for the ₹[amount] UPI boss😎😎. [username] op guys🍻🍻';
+    const message = template
+      .replace(/\[username\]/gi, name)
+      .replace(/\[amount\]/gi, amount);
+
+    console.log(`[UPI Widget] 💬 Sending Live Chat Message: "${message}"`);
+
+    // 1. StreamElements Native Overlay Chat Dispatch (Instant & Free)
+    if (window.SE_API && typeof window.SE_API.sendChatMessage === 'function') {
+      window.SE_API.sendChatMessage(message);
+    }
+
+    // 2. StreamElements Bot REST API (if JWT configured)
+    if (config.seJwtToken && config.seChannelId) {
+      fetch(`https://api.streamelements.com/kappa/v2/bot/${config.seChannelId}/say`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.seJwtToken}`
+        },
+        body: JSON.stringify({ message: message })
+      }).catch(e => console.warn('StreamElements API message error:', e));
+    }
+
+    // 3. Nightbot REST API (if Nightbot OAuth token provided)
+    if (config.nightbotToken) {
+      fetch('https://api.nightbot.tv/1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.nightbotToken}`
+        },
+        body: JSON.stringify({ message: message })
+      }).catch(e => console.warn('Nightbot API message error:', e));
+    }
+  } catch (err) {
+    console.error('Chat message dispatch error:', err);
+  }
+}
 
 // Standalone fallback initialization if opened outside StreamElements
 if (typeof window.SE_API === 'undefined') {
@@ -188,9 +244,15 @@ function showAlert(data) {
   // 1. Play alert sound instantly (0ms)
   playAlertSound();
 
-  // 2. Play TTS speech after short delay (1.2s so sound chime plays first)
+  const formattedAmt = Math.round(data.amount);
+
+  // 2. Send automated Chat Message (Nightbot / StreamElements Bot)
+  if (config.enableChatBot) {
+    sendChatThankYouMessage(name, formattedAmt);
+  }
+
+  // 3. Play TTS speech after short delay (1.2s so sound chime plays first)
   if (config.enableTts) {
-    const formattedAmt = Math.round(data.amount);
     const speechText = `${name} ne ${formattedAmt} rupees U.P.I. kiye hain!`;
     const ttsDelay = typeof config.ttsDelay !== 'undefined' ? parseInt(config.ttsDelay) * 1000 : 1200;
 

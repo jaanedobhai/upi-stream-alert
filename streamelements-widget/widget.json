@@ -4,6 +4,21 @@
     "label": "⚡ Instant Zero-Config Cloud URL (No Setup Needed!)",
     "value": "https://ntfy.sh/upi_alert_jaanedobhai_live"
   },
+  "enableChatBot": {
+    "type": "checkbox",
+    "label": "💬 Enable Live Chat Bot Thank-You Message",
+    "value": true
+  },
+  "chatMessageFormat": {
+    "type": "text",
+    "label": "Live Chat Thank-You Message Template",
+    "value": "[username] thanks for the ₹[amount] UPI boss😎😎. [username] op guys🍻🍻"
+  },
+  "nightbotToken": {
+    "type": "text",
+    "label": "Nightbot OAuth Token (Optional — Leave blank to use StreamElements Bot)",
+    "value": ""
+  },
   "enableTts": {
     "type": "checkbox",
     "label": "Enable TTS Voice",
@@ -43,7 +58,7 @@
   "alertDuration": {
     "type": "number",
     "label": "Alert Duration (Seconds)",
-    "value": 7,
+    "value": 8,
     "min": 2,
     "max": 30,
     "step": 1
