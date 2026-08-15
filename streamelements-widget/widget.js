@@ -49,6 +49,19 @@ window.addEventListener('onWidgetLoad', function (obj) {
   initConnection();
 });
 
+function toUnicodeItalics(str) {
+  if (!str) return '';
+  const italicMap = {
+    'a': '𝘢', 'b': '𝘣', 'c': '𝘤', 'd': '𝘥', 'e': '𝘦', 'f': '𝘧', 'g': '𝘨', 'h': '𝘩', 'i': '𝘪', 'j': '𝘫',
+    'k': '𝘬', 'l': '𝘭', 'm': '𝘮', 'n': '𝘯', 'o': '𝘰', 'p': '𝘱', 'q': '𝘲', 'r': '𝘳', 's': '𝘴', 't': '𝘵',
+    'u': '𝘶', 'v': '𝘷', 'w': '𝘸', 'x': '𝘹', 'y': '𝘺', 'z': '𝘻',
+    'A': '𝘈', 'B': '𝘉', 'C': '𝘊', 'D': '𝘋', 'E': '𝘌', 'F': '𝘍', 'G': '𝘎', 'H': '𝘏', 'I': '𝘐', 'J': '𝘑',
+    'K': '𝘒', 'L': '𝘓', 'M': '𝘔', 'N': '𝘕', 'O': '𝘖', 'P': '𝘗', 'Q': '𝘘', 'R': '𝘙', 'S': '𝘚', 'T': '𝘛',
+    'U': '𝘜', 'V': '𝘝', 'W': '𝘞', 'X': '𝘟', 'Y': '𝘠', 'Z': '𝘡'
+  };
+  return str.split('').map(c => italicMap[c] || c).join('');
+}
+
 let resolvedSeChannelId = '';
 let lastChatSentMsg = '';
 let lastChatSentTime = 0;
@@ -58,22 +71,26 @@ let lastChatSentTime = 0;
  */
 async function sendChatThankYouMessage(name, amount) {
   try {
-    const template = config.chatMessageFormat || '_[username]_ thanks for the ₹[amount] UPI boss😎😎. _[username]_ op guys🍻🍻';
-    const italicName = `_${name.replace(/^_+|_+$/g, '')}_`;
-    const message = template
+    // True Unicode Italics (renders natively on YouTube, Mobile, PC, OBS)
+    const italicName = toUnicodeItalics(name);
+
+    let template = config.chatMessageFormat || '[username] thanks for the ₹[amount] UPI boss😎😎. [username] op guys🍻🍻';
+    
+    // Clean any literal underscores and replace with actual Unicode Italics
+    let message = template
       .replace(/_?\[username\]_?/gi, italicName)
       .replace(/\[amount\]/gi, amount);
 
     const now = Date.now();
-    // 8-second deduplication: Never send exact same message twice
-    if (lastChatSentMsg === message && now - lastChatSentTime < 8000) {
+    // 10-second deduplication: Never send exact same message within 10 seconds
+    if (lastChatSentMsg === message && now - lastChatSentTime < 10000) {
       console.log('[UPI Widget] Duplicate chat message ignored.');
       return;
     }
     lastChatSentMsg = message;
     lastChatSentTime = now;
 
-    console.log(`[UPI Widget] 💬 Sending Single Live Chat Message: "${message}"`);
+    console.log(`[UPI Widget] 💬 Sending Single Unicode-Italic Live Chat Message: "${message}"`);
 
     // Priority 1: StreamElements Bot REST API (for YouTube & Twitch via JWT Token)
     if (config.seJwtToken && config.seJwtToken.trim() !== '') {
