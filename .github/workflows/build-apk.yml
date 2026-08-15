@@ -23,7 +23,20 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x android-app/gradlew || true
 
-    - name: Build Debug APK with Gradle Wrapper
+    - name: Generate Clean Release Keystore
+      working-directory: android-app/app
+      run: |
+        keytool -genkey -v \
+          -keystore upi_release.keystore \
+          -alias upistream \
+          -keyalg RSA \
+          -keysize 2048 \
+          -validity 10000 \
+          -dname "CN=UPIStreamAlert, OU=StreamAlert, O=Jaanedobhai, L=Delhi, S=Delhi, C=IN" \
+          -storepass upistreamsecret123 \
+          -keypass upistreamsecret123
+
+    - name: Build Signed APKs with Gradle Wrapper
       working-directory: android-app
       run: |
         gradle wrapper --gradle-version 8.6
@@ -32,6 +45,6 @@ jobs:
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: UPI-StreamAlert-debug-apk
+        name: UPI-StreamAlert-signed-apk
         path: android-app/app/build/outputs/apk/debug/app-debug.apk
         retention-days: 30

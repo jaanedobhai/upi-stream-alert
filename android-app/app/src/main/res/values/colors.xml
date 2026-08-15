@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#00D489</color>
-    <color name="primary_dark">#00A86B</color>
-    <color name="accent">#FFD700</color>
-    <color name="background_dark">#0C0E18</color>
-    <color name="card_bg">#141826</color>
-    <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#94A3B8</color>
-    <color name="success">#00E676</color>
-    <color name="error">#FF5252</color>
+    <!-- Apple-inspired Slate & Vibrant Palette -->
+    <color name="primary">#30D158</color> <!-- Apple Green -->
+    <color name="primary_dark">#248A3D</color>
+    <color name="accent">#FFD60A</color> <!-- Apple Gold -->
+    <color name="indigo_accent">#5E5CE6</color> <!-- Apple Indigo -->
+    <color name="background_dark">#0D1117</color> <!-- Deep Slate Background -->
+    <color name="card_bg">#161B22</color> <!-- Cupertino Elevated Card -->
+    <color name="card_elevated">#21262D</color> <!-- Elevated Section -->
+    <color name="border_subtle">#30363D</color> <!-- Subtle Border Stroke -->
+    <color name="text_primary">#F0F6FC</color> <!-- Pure Crisp White -->
+    <color name="text_secondary">#8B949E</color> <!-- Muted Slate Gray -->
+    <color name="text_tertiary">#6E7681</color>
+    <color name="success">#30D158</color>
+    <color name="error">#FF453A</color> <!-- Apple Red -->
+    <color name="warning">#FF9F0A</color> <!-- Apple Orange -->
+    <color name="chip_bg">#21262D</color>
 </resources>

@@ -116,7 +116,10 @@ class UPINotificationListenerService : NotificationListenerService() {
 
             Log.d(TAG, "🎉 PARSED UPI DONATION: ${donation.username} donated ₹${donation.amount} via ${donation.sourceApp}")
 
-            // Send to Cloud Relay
+            // 1. Immediately persist locally
+            AlertHistoryManager.addAlert(applicationContext, donation)
+
+            // 2. Send to Cloud Relay asynchronously
             serviceScope.launch {
                 val prefs = getSharedPreferences("upi_alert_prefs", Context.MODE_PRIVATE)
                 val serverUrl = prefs.getString("server_url", "https://ntfy.sh/upi_alert_jaanedobhai_live") ?: "https://ntfy.sh/upi_alert_jaanedobhai_live"
@@ -124,6 +127,9 @@ class UPINotificationListenerService : NotificationListenerService() {
 
                 val success = NetworkClient.sendAlert(applicationContext, donation, serverUrl, apiToken)
                 donation.status = if (success) "Sent ✅" else "Failed ❌"
+
+                // Update persistent storage status
+                AlertHistoryManager.updateAlertStatus(applicationContext, donation.id, donation.status)
 
                 // Broadcast update to MainActivity
                 val intent = Intent(ACTION_NEW_DONATION).apply {

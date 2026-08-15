@@ -4,30 +4,38 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardBackgroundColor="@color/card_bg"
-    app:cardCornerRadius="8dp"
-    app:strokeColor="#1E2436"
+    app:cardCornerRadius="16dp"
+    app:strokeColor="@color/border_subtle"
     app:strokeWidth="1dp"
-    android:layout_marginBottom="8dp">
+    app:cardElevation="0dp"
+    android:layout_marginBottom="10dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="12dp"
+        android:padding="14dp"
         android:gravity="center_vertical">
 
-        <!-- Amount Badge -->
-        <TextView
-            android:id="@+id/tvLogAmount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="₹500"
-            android:textColor="@color/primary"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:paddingEnd="12dp" />
+        <!-- Apple-style Circular Initial Avatar -->
+        <FrameLayout
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_avatar_circle"
+            android:layout_marginEnd="12dp">
 
-        <!-- Details -->
+            <TextView
+                android:id="@+id/tvLogAvatarInitial"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="R"
+                android:textColor="@color/primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <!-- Donor Name & Source App Info -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -38,28 +46,74 @@
                 android:id="@+id/tvLogUser"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Rahul Kumar"
+                android:text="Raju Ali Khan"
                 android:textColor="@color/text_primary"
-                android:textSize="14sp"
+                android:textSize="15sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tvLogApp"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Google Pay • 2 mins ago"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="2dp">
+
+                <TextView
+                    android:id="@+id/tvLogApp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="BHIM UPI"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" • "
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvLogTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Just now"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="11sp" />
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- Status -->
-        <TextView
-            android:id="@+id/tvLogStatus"
+        <!-- Amount & Status Container -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sent ✅"
-            android:textColor="@color/success"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:orientation="vertical"
+            android:gravity="end">
+
+            <!-- Amount Pill Badge -->
+            <TextView
+                android:id="@+id/tvLogAmount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_amount_pill"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:text="₹100"
+                android:textColor="@color/primary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <!-- Status Indicator -->
+            <TextView
+                android:id="@+id/tvLogStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sent ✅"
+                android:textColor="@color/success"
+                android:textSize="11sp"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

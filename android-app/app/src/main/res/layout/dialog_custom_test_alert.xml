@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_rounded"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Top Grabber / Handle (Apple style) -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="#30363D"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Dialog Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Custom Test Alert"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnDialogClose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✕"
+            android:textColor="@color/text_secondary"
+            android:textSize="18sp"
+            android:padding="6dp" />
+    </LinearLayout>
+
+    <!-- Custom Donor Name Input -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DONOR USERNAME"
+        android:textColor="@color/text_secondary"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.08"
+        android:layout_marginBottom="6dp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColorHint="@color/text_secondary"
+        app:boxStrokeColor="@color/primary"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp"
+        app:boxBackgroundColor="@color/card_elevated"
+        app:boxStrokeWidth="1dp"
+        android:layout_marginBottom="14dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etCustomName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="e.g. Raju Ali Khan"
+            android:text="Raju Ali Khan"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:inputType="textCapWords" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Custom Amount Input -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DONATION AMOUNT (₹)"
+        android:textColor="@color/text_secondary"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.08"
+        android:layout_marginBottom="6dp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColorHint="@color/text_secondary"
+        app:boxStrokeColor="@color/primary"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp"
+        app:boxBackgroundColor="@color/card_elevated"
+        app:boxStrokeWidth="1dp"
+        android:layout_marginBottom="10dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etCustomAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter amount"
+            android:text="100"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:inputType="numberDecimal" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Quick Preset Amount Chips -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="18dp">
+
+        <TextView
+            android:id="@+id/chipAmount10"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_chip"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="₹10"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/chipAmount50"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_chip"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="₹50"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/chipAmount100"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_chip"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="₹100"
+            android:textColor="@color/primary"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/chipAmount500"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_chip"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="₹500"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/chipAmount1000"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_chip"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="₹1000"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Source App Selection -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SIMULATED SOURCE APP"
+        android:textColor="@color/text_secondary"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.08"
+        android:layout_marginBottom="6dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="20dp">
+
+        <TextView
+            android:id="@+id/chipAppBhim"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_amount_pill"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="BHIM UPI"
+            android:textColor="@color/primary"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/chipAppGpay"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_chip"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Google Pay"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/chipAppPhonePe"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_chip"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="PhonePe"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/chipAppPaytm"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_chip"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="Paytm"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Send Test Alert Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSendCustomAlert"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="⚡ Fire Live Test Alert"
+        android:textColor="@color/background_dark"
+        android:textStyle="bold"
+        android:textSize="15sp"
+        app:cornerRadius="14dp"
+        app:backgroundTint="@color/primary" />
+
+</LinearLayout>
