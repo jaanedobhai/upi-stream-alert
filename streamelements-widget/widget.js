@@ -49,48 +49,81 @@ window.addEventListener('onWidgetLoad', function (obj) {
   initConnection();
 });
 
+let resolvedSeChannelId = '';
+
 /**
  * Sends automated chat message to YouTube/Twitch live chat via StreamElements Bot or Nightbot
  */
-function sendChatThankYouMessage(name, amount) {
+async function sendChatThankYouMessage(name, amount) {
   try {
     const template = config.chatMessageFormat || '[username] thanks for the ₹[amount] UPI boss😎😎. [username] op guys🍻🍻';
     const message = template
       .replace(/\[username\]/gi, name)
       .replace(/\[amount\]/gi, amount);
 
-    console.log(`[UPI Widget] 💬 Sending Live Chat Message: "${message}"`);
+    console.log(`[UPI Widget] 💬 Attempting to send Live Chat Message: "${message}"`);
 
-    // 1. StreamElements Native Overlay Chat Dispatch (Instant & Free)
+    // 1. StreamElements Native Overlay Chat Dispatch (Instant on Twitch)
     if (window.SE_API && typeof window.SE_API.sendChatMessage === 'function') {
       window.SE_API.sendChatMessage(message);
     }
 
-    // 2. StreamElements Bot REST API (if JWT configured)
-    if (config.seJwtToken && config.seChannelId) {
-      fetch(`https://api.streamelements.com/kappa/v2/bot/${config.seChannelId}/say`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.seJwtToken}`
-        },
-        body: JSON.stringify({ message: message })
-      }).catch(e => console.warn('StreamElements API message error:', e));
+    // 2. StreamElements Bot REST API for YouTube & Twitch (via JWT Token)
+    if (config.seJwtToken && config.seJwtToken.trim() !== '') {
+      const token = config.seJwtToken.trim();
+
+      // Resolve channel ID from JWT if not known yet
+      if (!resolvedSeChannelId) {
+        try {
+          const meRes = await fetch('https://api.streamelements.com/kappa/v2/channels/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (meRes.ok) {
+            const meData = await meRes.json();
+            resolvedSeChannelId = meData._id || meData.id;
+            console.log('[UPI Widget] ✅ StreamElements Channel ID Resolved:', resolvedSeChannelId);
+          }
+        } catch (e) {
+          console.warn('[UPI Widget] Failed to fetch channel ID from me endpoint:', e);
+        }
+      }
+
+      const targetChannelId = resolvedSeChannelId || config.seChannelId;
+      if (targetChannelId) {
+        const botRes = await fetch(`https://api.streamelements.com/kappa/v2/bot/${targetChannelId}/say`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ message: message })
+        });
+        if (botRes.ok) {
+          console.log('[UPI Widget] ✅ Bot Message successfully posted to YouTube/Twitch Live Chat!');
+        } else {
+          const errText = await botRes.text();
+          console.warn('[UPI Widget] ❌ Bot say response error:', botRes.status, errText);
+        }
+      }
+    } else {
+      console.log('[UPI Widget] ℹ️ Note: To send chat messages on YouTube Live, please paste your StreamElements JWT Token in Widget Settings.');
     }
 
     // 3. Nightbot REST API (if Nightbot OAuth token provided)
-    if (config.nightbotToken) {
+    if (config.nightbotToken && config.nightbotToken.trim() !== '') {
       fetch('https://api.nightbot.tv/1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.nightbotToken}`
+          'Authorization': `Bearer ${config.nightbotToken.trim()}`
         },
         body: JSON.stringify({ message: message })
-      }).catch(e => console.warn('Nightbot API message error:', e));
+      }).then(res => {
+        if (res.ok) console.log('[UPI Widget] ✅ Nightbot message sent successfully!');
+      }).catch(e => console.warn('[UPI Widget] Nightbot API error:', e));
     }
   } catch (err) {
-    console.error('Chat message dispatch error:', err);
+    console.error('[UPI Widget] Chat message dispatch error:', err);
   }
 }
 
