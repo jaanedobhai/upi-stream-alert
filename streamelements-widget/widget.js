@@ -448,7 +448,7 @@ function playFallbackSynthSound() {
 let currentTtsSource = null;
 let currentDirectAudio = null;
 
-let activeTtsAudios = [];
+let currentKalpanaAudio = null;
 
 function playTTS(text) {
   if (!config.enableTts || !text) return;
@@ -457,40 +457,33 @@ function playTTS(text) {
   const kalpanaUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=hi&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
 
   try {
-    // 1. Stop any currently playing TTS instances
-    activeTtsAudios.forEach(a => {
-      try { a.pause(); a.currentTime = 0; } catch (e) {}
-    });
-    activeTtsAudios = [];
-
-    // 2. Multi-Channel Hardware Amplifier (6 Parallel Sound Engines for 1000% Ear-Blasting Loudness)
-    for (let i = 0; i < 6; i++) {
-      const audio = new Audio(kalpanaUrl);
-      audio.volume = 1.0;
-      activeTtsAudios.push(audio);
-      audio.play().catch(e => {});
-    }
-
-    // 3. Parallel Native Synthesis Engine for Crystal Clear Vocal Presence
+    // 1. Cancel any native speech synthesis to guarantee zero parallel echo
     if ('speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.rate = 0.95;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-        
-        const voices = window.speechSynthesis.getVoices();
-        const hindiVoice = voices.find(v => v.lang.includes('hi') || v.lang.includes('IN'));
-        if (hindiVoice) utterance.voice = hindiVoice;
-        
-        window.speechSynthesis.speak(utterance);
-      } catch (err) {}
+      try { window.speechSynthesis.cancel(); } catch (e) {}
     }
 
-    console.log(`[UPI Widget] 🎙️ MAXIMUM 1000% BOOSTED Kalpana Voice Dispatched: "${cleanText}"`);
+    // 2. Stop any existing audio instance immediately
+    if (currentKalpanaAudio) {
+      try {
+        currentKalpanaAudio.pause();
+        currentKalpanaAudio.currentTime = 0;
+      } catch (e) {}
+      currentKalpanaAudio = null;
+    }
+
+    // 3. Play EXACTLY 1 dedicated crisp single voice stream
+    currentKalpanaAudio = new Audio(kalpanaUrl);
+    currentKalpanaAudio.volume = 1.0;
+    
+    currentKalpanaAudio.play().then(() => {
+      console.log(`[UPI Widget] 🎙️ Crystal-Clear Single Kalpana Voice Played: "${cleanText}"`);
+    }).catch(err => {
+      console.warn('[UPI Widget] HTML5 Audio playback fallback:', err);
+      playBrowserFallbackTTS(cleanText);
+    });
   } catch (err) {
-    console.error('[UPI Widget] TTS error:', err);
+    console.error('[UPI Widget] TTS playback error:', err);
+    playBrowserFallbackTTS(cleanText);
   }
 }
 
