@@ -63,7 +63,7 @@ function toUnicodeItalics(str) {
 }
 
 let resolvedSeChannelId = '';
-let lastChatSentMsg = '';
+let lastChatSentAlertKey = '';
 let lastChatSentTime = 0;
 
 /**
@@ -71,14 +71,18 @@ let lastChatSentTime = 0;
  */
 async function sendChatThankYouMessage(name, amount) {
   try {
-    // 1. If running in StreamElements Editor preview iframe, SKIP chat dispatch (OBS will handle it)
-    const isEditorIframe = (window.self !== window.top) || window.location.href.includes('/dashboard');
-    if (isEditorIframe) {
-      console.log('[UPI Widget] ℹ️ StreamElements Editor iframe detected: Skipping chat dispatch (OBS Studio will send the single live message).');
+    const alertKey = `${name}_${amount}`;
+    const now = Date.now();
+
+    // 8-second deduplication: Never send exact same alert twice
+    if (alertKey === lastChatSentAlertKey && (now - lastChatSentTime) < 8000) {
+      console.log('[UPI Widget] Duplicate chat alert skipped within 8s window.');
       return;
     }
+    lastChatSentAlertKey = alertKey;
+    lastChatSentTime = now;
 
-    // 2. True Unicode Italics (renders natively on YouTube, Mobile, PC, OBS)
+    // True Unicode Italics (renders natively on YouTube, Mobile, PC, OBS)
     const italicName = toUnicodeItalics(name);
 
     let template = config.chatMessageFormat || '[username] thanks for the ₹[amount] UPI boss😎😎. [username] op guys🍻🍻';
@@ -88,16 +92,7 @@ async function sendChatThankYouMessage(name, amount) {
       .replace(/_?\[username\]_?/gi, italicName)
       .replace(/\[amount\]/gi, amount);
 
-    const now = Date.now();
-    // 10-second deduplication: Never send exact same message within 10 seconds
-    if (lastChatSentMsg === message && (now - lastChatSentTime) < 10000) {
-      console.log('[UPI Widget] Duplicate chat message ignored.');
-      return;
-    }
-    lastChatSentMsg = message;
-    lastChatSentTime = now;
-
-    console.log(`[UPI Widget] 💬 Sending Single Unicode-Italic Live Chat Message: "${message}"`);
+    console.log(`[UPI Widget] 💬 Sending Live Chat Message: "${message}"`);
 
     // Priority 1: StreamElements Bot REST API (for YouTube & Twitch via JWT Token)
     if (config.seJwtToken && config.seJwtToken.trim() !== '') {
@@ -131,6 +126,9 @@ async function sendChatThankYouMessage(name, amount) {
         if (botRes.ok) {
           console.log('[UPI Widget] ✅ Bot Message successfully posted to Live Chat!');
           return; // Sent successfully, exit to avoid duplicate
+        } else {
+          const errText = await botRes.text();
+          console.warn('[UPI Widget] Bot say response error:', botRes.status, errText);
         }
       }
     }
