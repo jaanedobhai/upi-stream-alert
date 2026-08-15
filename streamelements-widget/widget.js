@@ -346,6 +346,8 @@ function playFallbackSynthSound() {
   }
 }
 
+let currentTtsAudio = null;
+
 function playTTS(text) {
   if (!config.enableTts || !text) return;
 
@@ -353,52 +355,23 @@ function playTTS(text) {
   const kalpanaUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=hi&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
 
   try {
-    const ctx = getAudioContext();
-    
-    // Method 1: Web Audio Decoded Buffer at True 600% Gain Multiplier
-    if (ctx) {
-      fetch(kalpanaUrl)
-        .then(response => response.arrayBuffer())
-        .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
-        .then(audioBuffer => {
-          const source = ctx.createBufferSource();
-          source.buffer = audioBuffer;
-
-          const gainNode = ctx.createGain();
-          const compressor = ctx.createDynamicsCompressor();
-
-          // 600% Volume (6.0x Gain Multiplier)
-          gainNode.gain.setValueAtTime(6.0, ctx.currentTime);
-          compressor.threshold.setValueAtTime(-18, ctx.currentTime);
-          compressor.knee.setValueAtTime(20, ctx.currentTime);
-          compressor.ratio.setValueAtTime(8, ctx.currentTime);
-
-          source.connect(compressor);
-          compressor.connect(gainNode);
-          gainNode.connect(ctx.destination);
-
-          source.start(0);
-          console.log(`[UPI Widget] 🎙️ TRUE 600% Decoded Kalpana Voice Played: "${cleanText}"`);
-        })
-        .catch(err => {
-          console.warn('[UPI Widget] Buffer decode failed, using multi-channel loud playback:', err);
-          playMultiChannelTTS(kalpanaUrl);
-        });
-      return;
+    // Stop any previous playing audio to prevent overlapping echo
+    if (currentTtsAudio) {
+      try {
+        currentTtsAudio.pause();
+        currentTtsAudio.currentTime = 0;
+      } catch (e) {}
     }
 
-    playMultiChannelTTS(kalpanaUrl);
+    currentTtsAudio = new Audio(kalpanaUrl);
+    currentTtsAudio.volume = 1.0;
+    currentTtsAudio.play().then(() => {
+      console.log(`[UPI Widget] 🎙️ Clean Single Kalpana Voice Played: "${cleanText}"`);
+    }).catch(err => {
+      console.warn('[UPI Widget] HTML5 audio error:', err);
+    });
   } catch (err) {
-    playMultiChannelTTS(kalpanaUrl);
-  }
-}
-
-function playMultiChannelTTS(url) {
-  // Multi-channel synchronized loud audio
-  for (let i = 0; i < 4; i++) {
-    const audio = new Audio(url);
-    audio.volume = 1.0;
-    audio.play().catch(e => {});
+    console.error('[UPI Widget] TTS error:', err);
   }
 }
 
