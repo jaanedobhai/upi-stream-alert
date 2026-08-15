@@ -71,14 +71,6 @@ let lastChatSentTime = 0;
  */
 async function sendChatThankYouMessage(name, amount) {
   try {
-    // 1. If running inside StreamElements Editor Preview Iframe, skip chat POST
-    // (This prevents Chrome Editor + OBS Studio from sending 2 duplicate messages)
-    const isEditorPreview = (window.self !== window.top);
-    if (isEditorPreview) {
-      console.log('[UPI Widget] ℹ️ StreamElements Editor iframe detected: Skipping chat POST (OBS Live Stream handles the single broadcast).');
-      return;
-    }
-
     const alertKey = `${name}_${amount}`;
     const now = Date.now();
 
