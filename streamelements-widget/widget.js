@@ -94,7 +94,7 @@ async function sendChatThankYouMessage(name, amount) {
 
     console.log(`[UPI Widget] 💬 Sending Live Chat Message: "${message}"`);
 
-    // Priority 1: StreamElements Bot REST API (for YouTube & Twitch via JWT Token)
+    // METHOD A: StreamElements Bot REST API (for YouTube & Twitch via JWT Token)
     if (config.seJwtToken && config.seJwtToken.trim() !== '') {
       const token = config.seJwtToken.trim();
 
@@ -115,25 +115,23 @@ async function sendChatThankYouMessage(name, amount) {
 
       const targetChannelId = resolvedSeChannelId || config.seChannelId;
       if (targetChannelId) {
-        const botRes = await fetch(`https://api.streamelements.com/kappa/v2/bot/${targetChannelId}/say`, {
+        fetch(`https://api.streamelements.com/kappa/v2/bot/${targetChannelId}/say`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ message: message })
+        }).then(res => {
+          console.log('[UPI Widget] ✅ Bot Message POST response status:', res.status);
+        }).catch(err => {
+          console.warn('[UPI Widget] Bot say error:', err);
         });
-        if (botRes.ok) {
-          console.log('[UPI Widget] ✅ Bot Message successfully posted to Live Chat!');
-          return; // Sent successfully, exit to avoid duplicate
-        } else {
-          const errText = await botRes.text();
-          console.warn('[UPI Widget] Bot say response error:', botRes.status, errText);
-        }
       }
+      return; // EXCLUSIVE RETURN: Never execute SE_API or other fallbacks!
     }
 
-    // Priority 2: Nightbot REST API (if configured)
+    // METHOD B: Nightbot REST API
     if (config.nightbotToken && config.nightbotToken.trim() !== '') {
       fetch('https://api.nightbot.tv/1/messages', {
         method: 'POST',
@@ -143,12 +141,13 @@ async function sendChatThankYouMessage(name, amount) {
         },
         body: JSON.stringify({ message: message })
       }).catch(e => {});
-      return;
+      return; // EXCLUSIVE RETURN
     }
 
-    // Priority 3: Fallback Native StreamElements Overlay Chat Dispatch
+    // METHOD C: Native StreamElements Overlay Chat (Twitch only when no JWT provided)
     if (window.SE_API && typeof window.SE_API.sendChatMessage === 'function') {
       window.SE_API.sendChatMessage(message);
+      return;
     }
   } catch (err) {
     console.error('[UPI Widget] Chat message dispatch error:', err);
