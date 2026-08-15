@@ -71,7 +71,14 @@ let lastChatSentTime = 0;
  */
 async function sendChatThankYouMessage(name, amount) {
   try {
-    // True Unicode Italics (renders natively on YouTube, Mobile, PC, OBS)
+    // 1. If running in StreamElements Editor preview iframe, SKIP chat dispatch (OBS will handle it)
+    const isEditorIframe = (window.self !== window.top) || window.location.href.includes('/dashboard');
+    if (isEditorIframe) {
+      console.log('[UPI Widget] ℹ️ StreamElements Editor iframe detected: Skipping chat dispatch (OBS Studio will send the single live message).');
+      return;
+    }
+
+    // 2. True Unicode Italics (renders natively on YouTube, Mobile, PC, OBS)
     const italicName = toUnicodeItalics(name);
 
     let template = config.chatMessageFormat || '[username] thanks for the ₹[amount] UPI boss😎😎. [username] op guys🍻🍻';
@@ -83,7 +90,7 @@ async function sendChatThankYouMessage(name, amount) {
 
     const now = Date.now();
     // 10-second deduplication: Never send exact same message within 10 seconds
-    if (lastChatSentMsg === message && now - lastChatSentTime < 10000) {
+    if (lastChatSentMsg === message && (now - lastChatSentTime) < 10000) {
       console.log('[UPI Widget] Duplicate chat message ignored.');
       return;
     }
@@ -440,7 +447,8 @@ function playFallbackSynthSound() {
   }
 }
 
-let currentTtsAudio = null;
+let currentTtsSource = null;
+let currentDirectAudio = null;
 
 function playTTS(text) {
   if (!config.enableTts || !text) return;
@@ -449,24 +457,57 @@ function playTTS(text) {
   const kalpanaUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=hi&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
 
   try {
-    // Stop any previous playing audio to prevent overlapping echo
-    if (currentTtsAudio) {
-      try {
-        currentTtsAudio.pause();
-        currentTtsAudio.currentTime = 0;
-      } catch (e) {}
+    const ctx = getAudioContext();
+    if (ctx) {
+      if (currentTtsSource) {
+        try { currentTtsSource.stop(); } catch (e) {}
+        currentTtsSource = null;
+      }
+
+      fetch(kalpanaUrl)
+        .then(res => res.arrayBuffer())
+        .then(buffer => ctx.decodeAudioData(buffer))
+        .then(decoded => {
+          const source = ctx.createBufferSource();
+          source.buffer = decoded;
+          currentTtsSource = source;
+
+          const gainNode = ctx.createGain();
+          const compressor = ctx.createDynamicsCompressor();
+
+          // 1000% Volume Boost (10.0x Gain Multiplier)
+          gainNode.gain.setValueAtTime(10.0, ctx.currentTime);
+          compressor.threshold.setValueAtTime(-14, ctx.currentTime);
+          compressor.knee.setValueAtTime(15, ctx.currentTime);
+          compressor.ratio.setValueAtTime(6, ctx.currentTime);
+
+          source.connect(gainNode);
+          gainNode.connect(compressor);
+          compressor.connect(ctx.destination);
+
+          source.start(0);
+          console.log(`[UPI Widget] 🎙️ 1000% MEGA BOOSTED Kalpana Voice Played: "${cleanText}"`);
+        })
+        .catch(err => {
+          console.warn('[UPI Widget] Decoded buffer fallback:', err);
+          playDirectTTS(kalpanaUrl);
+        });
+      return;
     }
 
-    currentTtsAudio = new Audio(kalpanaUrl);
-    currentTtsAudio.volume = 1.0;
-    currentTtsAudio.play().then(() => {
-      console.log(`[UPI Widget] 🎙️ Clean Single Kalpana Voice Played: "${cleanText}"`);
-    }).catch(err => {
-      console.warn('[UPI Widget] HTML5 audio error:', err);
-    });
+    playDirectTTS(kalpanaUrl);
   } catch (err) {
-    console.error('[UPI Widget] TTS error:', err);
+    playDirectTTS(kalpanaUrl);
   }
+}
+
+function playDirectTTS(url) {
+  if (currentDirectAudio) {
+    try { currentDirectAudio.pause(); } catch (e) {}
+  }
+  currentDirectAudio = new Audio(url);
+  currentDirectAudio.volume = 1.0;
+  currentDirectAudio.play().catch(e => {});
 }
 
 function playBrowserFallbackTTS(text) {
