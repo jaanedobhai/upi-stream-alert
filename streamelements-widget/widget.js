@@ -58,14 +58,15 @@ let lastChatSentTime = 0;
  */
 async function sendChatThankYouMessage(name, amount) {
   try {
-    const template = config.chatMessageFormat || '[username] thanks for the ₹[amount] UPI boss😎😎. [username] op guys🍻🍻';
+    const template = config.chatMessageFormat || '_[username]_ thanks for the ₹[amount] UPI boss😎😎. _[username]_ op guys🍻🍻';
+    const italicName = `_${name.replace(/^_+|_+$/g, '')}_`;
     const message = template
-      .replace(/\[username\]/gi, name)
+      .replace(/_?\[username\]_?/gi, italicName)
       .replace(/\[amount\]/gi, amount);
 
     const now = Date.now();
-    // 5-second deduplication: Never send exact same message twice
-    if (lastChatSentMsg === message && now - lastChatSentTime < 5000) {
+    // 8-second deduplication: Never send exact same message twice
+    if (lastChatSentMsg === message && now - lastChatSentTime < 8000) {
       console.log('[UPI Widget] Duplicate chat message ignored.');
       return;
     }
@@ -149,23 +150,61 @@ function initConnection() {
   }
 }
 
+function queueAlert(data) {
+  if (!data || data.amount < config.minAmount) return;
+
+  const rawName = data.username || 'Anonymous';
+  const alertKey = `${rawName}_${Math.round(data.amount)}`;
+  const now = Date.now();
+
+  // Deduplication: Ignore identical alerts arriving within 6 seconds
+  if (alertKey === lastProcessedAlertId && (now - lastProcessedAlertTime) < 6000) {
+    console.log('[UPI Widget] Duplicate alert event ignored:', alertKey);
+    return;
+  }
+  lastProcessedAlertId = alertKey;
+  lastProcessedAlertTime = now;
+
+  alertQueue.push(data);
+  processQueue();
+}
+
+function processQueue() {
+  if (isPlaying || alertQueue.length === 0) return;
+  
+  isPlaying = true;
+  const item = alertQueue.shift();
+  showAlert(item);
+}
+
+let activeEventSource = null;
+
 /**
  * Option 1: 100% Zero-Setup Instant Cloud (No Account or Server Needed)
  */
 function initInstantCloudConnection() {
+  // Close any existing active EventSource to prevent duplicate listeners
+  if (activeEventSource) {
+    try {
+      activeEventSource.close();
+      console.log('[UPI Widget] Closed previous EventSource connection.');
+    } catch (e) {}
+    activeEventSource = null;
+  }
+
   let sseUrl = config.cloudChannelUrl.trim().replace(/\/+$/, '');
   if (!sseUrl.endsWith('/sse')) sseUrl += '/sse';
 
   console.log(`[UPI Widget] ⚡ Connecting to Zero-Config Cloud Channel: ${sseUrl}`);
 
   try {
-    const eventSource = new EventSource(sseUrl);
+    activeEventSource = new EventSource(sseUrl);
 
-    eventSource.onopen = () => {
+    activeEventSource.onopen = () => {
       console.log('[UPI Widget] ✅ Connected to Zero-Config Cloud Relay!');
     };
 
-    eventSource.onmessage = (event) => {
+    activeEventSource.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
         if (payload.event === 'message' && payload.message) {
@@ -178,7 +217,7 @@ function initInstantCloudConnection() {
       }
     };
 
-    eventSource.onerror = (err) => {
+    activeEventSource.onerror = (err) => {
       console.warn('[UPI Widget] SSE Reconnecting...', err);
     };
   } catch (err) {
