@@ -306,39 +306,9 @@ document.addEventListener('click', () => {
 
 function playAlertSound() {
   try {
-    const ctx = getAudioContext();
     if (config.soundUrl) {
-      if (ctx) {
-        const audio = new Audio();
-        audio.crossOrigin = "anonymous";
-        audio.src = config.soundUrl;
-
-        const source = ctx.createMediaElementSource(audio);
-        const gainNode = ctx.createGain();
-        const compressor = ctx.createDynamicsCompressor();
-
-        // 600% Volume Boost (6.0x Gain)
-        gainNode.gain.setValueAtTime(6.0, ctx.currentTime);
-        compressor.threshold.setValueAtTime(-24, ctx.currentTime);
-        compressor.knee.setValueAtTime(30, ctx.currentTime);
-        compressor.ratio.setValueAtTime(12, ctx.currentTime);
-
-        source.connect(compressor);
-        compressor.connect(gainNode);
-        gainNode.connect(ctx.destination);
-
-        audio.play().then(() => {
-          console.log('[UPI Widget] 600% Alert sound played successfully');
-        }).catch(e => {
-          const direct = new Audio(config.soundUrl);
-          direct.volume = 1.0;
-          direct.play().catch(err => playFallbackSynthSound());
-        });
-        return;
-      }
-
       const audio = new Audio(config.soundUrl);
-      audio.volume = 1.0;
+      audio.volume = 0.7; // Pleasant chime volume
       audio.play().catch(e => playFallbackSynthSound());
     } else {
       playFallbackSynthSound();
@@ -362,8 +332,7 @@ function playFallbackSynthSound() {
       osc.frequency.value = freq;
 
       const startTime = ctx.currentTime + index * 0.1;
-      // 600% Boosted Synth
-      gain.gain.setValueAtTime(1.5, startTime);
+      gain.gain.setValueAtTime(0.4, startTime);
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
 
       osc.connect(gain);
@@ -384,45 +353,52 @@ function playTTS(text) {
   const kalpanaUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=hi&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
 
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
     const ctx = getAudioContext();
     
+    // Method 1: Web Audio Decoded Buffer at True 600% Gain Multiplier
     if (ctx) {
-      const audio = new Audio();
-      audio.crossOrigin = "anonymous";
-      audio.src = kalpanaUrl;
+      fetch(kalpanaUrl)
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+        .then(audioBuffer => {
+          const source = ctx.createBufferSource();
+          source.buffer = audioBuffer;
 
-      const source = ctx.createMediaElementSource(audio);
-      const gainNode = ctx.createGain();
-      const compressor = ctx.createDynamicsCompressor();
+          const gainNode = ctx.createGain();
+          const compressor = ctx.createDynamicsCompressor();
 
-      // 600% Loud Boost (6.0x Gain Multiplier)
-      gainNode.gain.setValueAtTime(6.0, ctx.currentTime);
-      compressor.threshold.setValueAtTime(-24, ctx.currentTime);
-      compressor.knee.setValueAtTime(30, ctx.currentTime);
-      compressor.ratio.setValueAtTime(12, ctx.currentTime);
+          // 600% Volume (6.0x Gain Multiplier)
+          gainNode.gain.setValueAtTime(6.0, ctx.currentTime);
+          compressor.threshold.setValueAtTime(-18, ctx.currentTime);
+          compressor.knee.setValueAtTime(20, ctx.currentTime);
+          compressor.ratio.setValueAtTime(8, ctx.currentTime);
 
-      source.connect(compressor);
-      compressor.connect(gainNode);
-      gainNode.connect(ctx.destination);
+          source.connect(compressor);
+          compressor.connect(gainNode);
+          gainNode.connect(ctx.destination);
 
-      audio.play().then(() => {
-        console.log(`[UPI Widget] 🎙️ 600% Boosted Kalpana (Hindi) Voice Played: "${cleanText}"`);
-      }).catch(err => {
-        const directAudio = new Audio(kalpanaUrl);
-        directAudio.volume = 1.0;
-        directAudio.play().catch(e => console.error("Kalpana audio error:", e));
-      });
+          source.start(0);
+          console.log(`[UPI Widget] 🎙️ TRUE 600% Decoded Kalpana Voice Played: "${cleanText}"`);
+        })
+        .catch(err => {
+          console.warn('[UPI Widget] Buffer decode failed, using multi-channel loud playback:', err);
+          playMultiChannelTTS(kalpanaUrl);
+        });
       return;
     }
 
-    const directAudio = new Audio(kalpanaUrl);
-    directAudio.volume = 1.0;
-    directAudio.play().catch(e => console.error("Kalpana audio error:", e));
+    playMultiChannelTTS(kalpanaUrl);
   } catch (err) {
-    const directAudio = new Audio(kalpanaUrl);
-    directAudio.volume = 1.0;
-    directAudio.play().catch(e => console.error("Kalpana audio error:", e));
+    playMultiChannelTTS(kalpanaUrl);
+  }
+}
+
+function playMultiChannelTTS(url) {
+  // Multi-channel synchronized loud audio
+  for (let i = 0; i < 4; i++) {
+    const audio = new Audio(url);
+    audio.volume = 1.0;
+    audio.play().catch(e => {});
   }
 }
 

@@ -14,9 +14,9 @@
     "label": "Live Chat Thank-You Message Template",
     "value": "[username] thanks for the ₹[amount] UPI boss😎😎. [username] op guys🍻🍻"
   },
-  "nightbotToken": {
+  "seJwtToken": {
     "type": "text",
-    "label": "Nightbot OAuth Token (Optional — Leave blank to use StreamElements Bot)",
+    "label": "StreamElements JWT Token (For YouTube Chat Bot — Get from streamelements.com/dashboard/account/channels)",
     "value": ""
   },
   "enableTts": {
@@ -29,7 +29,7 @@
     "label": "TTS Voice",
     "value": "Kalpana",
     "options": {
-      "Kalpana": "🇮🇳 Kalpana (Natural Hindi Female - Classic Indian Streamer)",
+      "Kalpana": "🇮🇳 Kalpana (Natural Hindi Female - 600% Loud Boost)",
       "Raveena": "🇮🇳 Raveena (Indian English - Female)",
       "Aditi": "🇮🇳 Aditi (Indian English / Hindi - Female)",
       "Brian": "🇬🇧 Brian (UK English - Classic Streamer)",
@@ -46,14 +46,6 @@
     "min": 0,
     "max": 10,
     "step": 1
-  },
-  "ttsVolume": {
-    "type": "slider",
-    "label": "TTS Volume (%)",
-    "value": 90,
-    "min": 0,
-    "max": 100,
-    "step": 5
   },
   "alertDuration": {
     "type": "number",
