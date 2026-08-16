@@ -71,14 +71,25 @@ let lastChatSentTime = 0;
  */
 async function sendChatThankYouMessage(name, amount) {
   try {
-    const alertKey = `${name}_${amount}`;
+    const alertKey = `upi_chat_${name.toLowerCase().trim()}_${Math.round(amount)}`;
     const now = Date.now();
 
-    // 8-second deduplication: Never send exact same alert twice
-    if (alertKey === lastChatSentAlertKey && (now - lastChatSentTime) < 8000) {
-      console.log('[UPI Widget] Duplicate chat alert skipped within 8s window.');
+    // 1. In-memory 12-second deduplication
+    if (alertKey === lastChatSentAlertKey && (now - lastChatSentTime) < 12000) {
+      console.log('[UPI Widget] Duplicate chat alert blocked by in-memory lock:', alertKey);
       return;
     }
+
+    // 2. Storage-level 12-second deduplication across any reloaded/parallel scopes
+    try {
+      const storageTime = parseInt(sessionStorage.getItem(alertKey) || '0', 10);
+      if (now - storageTime < 12000) {
+        console.log('[UPI Widget] Duplicate chat alert blocked by session storage lock:', alertKey);
+        return;
+      }
+      sessionStorage.setItem(alertKey, now.toString());
+    } catch (e) {}
+
     lastChatSentAlertKey = alertKey;
     lastChatSentTime = now;
 
@@ -92,7 +103,7 @@ async function sendChatThankYouMessage(name, amount) {
       .replace(/_?\[username\]_?/gi, italicName)
       .replace(/\[amount\]/gi, amount);
 
-    console.log(`[UPI Widget] 💬 Sending Live Chat Message: "${message}"`);
+    console.log(`[UPI Widget] 💬 Sending EXACTLY ONE Live Chat Message: "${message}"`);
 
     // METHOD A: StreamElements Bot REST API (for YouTube & Twitch via JWT Token)
     if (config.seJwtToken && config.seJwtToken.trim() !== '') {
@@ -123,12 +134,12 @@ async function sendChatThankYouMessage(name, amount) {
           },
           body: JSON.stringify({ message: message })
         }).then(res => {
-          console.log('[UPI Widget] ✅ Bot Message POST response status:', res.status);
+          console.log('[UPI Widget] ✅ Bot Message successfully POSTed to Live Chat (Status: ' + res.status + ')');
         }).catch(err => {
           console.warn('[UPI Widget] Bot say error:', err);
         });
       }
-      return; // EXCLUSIVE: Never run fallbacks
+      return; // EXCLUSIVE RETURN: Never run any other method
     }
 
     // METHOD B: Nightbot REST API
@@ -154,10 +165,15 @@ async function sendChatThankYouMessage(name, amount) {
   }
 }
 
+let isInitialized = false;
+
 // Standalone fallback initialization if opened outside StreamElements
 if (typeof window.SE_API === 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
-    initConnection();
+    if (!isInitialized) {
+      isInitialized = true;
+      initConnection();
+    }
   });
 }
 
@@ -171,19 +187,22 @@ function initConnection() {
   }
 }
 
+let lastProcessedAlertKey = '';
+let lastProcessedAlertTime = 0;
+
 function queueAlert(data) {
   if (!data || data.amount < config.minAmount) return;
 
   const rawName = data.username || 'Anonymous';
-  const alertKey = `${rawName}_${Math.round(data.amount)}`;
+  const alertKey = `q_${rawName.toLowerCase().trim()}_${Math.round(data.amount)}`;
   const now = Date.now();
 
-  // Deduplication: Ignore identical alerts arriving within 6 seconds
-  if (alertKey === lastProcessedAlertId && (now - lastProcessedAlertTime) < 6000) {
-    console.log('[UPI Widget] Duplicate alert event ignored:', alertKey);
+  // Deduplication: Ignore identical alerts arriving within 10 seconds
+  if (alertKey === lastProcessedAlertKey && (now - lastProcessedAlertTime) < 10000) {
+    console.log('[UPI Widget] Duplicate alert event ignored in queue:', alertKey);
     return;
   }
-  lastProcessedAlertId = alertKey;
+  lastProcessedAlertKey = alertKey;
   lastProcessedAlertTime = now;
 
   alertQueue.push(data);
@@ -245,6 +264,8 @@ function initInstantCloudConnection() {
     console.error('[UPI Widget] SSE Init Error:', err);
   }
 }
+
+
 
 /**
  * Option 1: Cloud WebSocket Server (Render / Railway / Glitch)
