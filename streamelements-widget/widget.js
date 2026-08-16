@@ -71,6 +71,16 @@ let lastChatSentTime = 0;
  */
 async function sendChatThankYouMessage(name, amount) {
   try {
+    // 1. If running in Chrome Editor Preview iframe (and NOT OBS), skip chat POST
+    // (This guarantees that when you have both Chrome Editor and OBS open, ONLY OBS broadcasts)
+    const isObsStudio = (typeof window.obsstudio !== 'undefined');
+    const isEditorIframe = (window.self !== window.top) || window.location.href.includes('/dashboard');
+
+    if (isEditorIframe && !isObsStudio) {
+      console.log('[UPI Widget] ℹ️ Chrome Editor preview detected: Skipping chat POST so OBS Live Stream sends the single message.');
+      return;
+    }
+
     const alertKey = `upi_chat_${name.toLowerCase().trim()}_${Math.round(amount)}`;
     const now = Date.now();
 
