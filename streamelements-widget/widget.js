@@ -71,22 +71,12 @@ let lastChatSentTime = 0;
  */
 async function sendChatThankYouMessage(name, amount) {
   try {
-    // 1. Guard against Editor Duplicate: If running inside StreamElements Editor preview, skip chat POST
-    // (This guarantees that when you have both Chrome Editor and OBS open, only OBS broadcasts to chat)
-    const isEditor = (window.self !== window.top) || 
-                     window.location.href.includes('/dashboard') || 
-                     window.location.href.includes('/edit');
-    if (isEditor) {
-      console.log('[UPI Widget] ℹ️ StreamElements Editor preview detected: Skipping chat POST to prevent duplicate message with OBS Studio.');
-      return;
-    }
-
     const alertKey = `${name}_${amount}`;
     const now = Date.now();
 
-    // 10-second deduplication: Never send exact same alert twice
-    if (alertKey === lastChatSentAlertKey && (now - lastChatSentTime) < 10000) {
-      console.log('[UPI Widget] Duplicate chat alert skipped within 10s window.');
+    // 8-second deduplication: Never send exact same alert twice
+    if (alertKey === lastChatSentAlertKey && (now - lastChatSentTime) < 8000) {
+      console.log('[UPI Widget] Duplicate chat alert skipped within 8s window.');
       return;
     }
     lastChatSentAlertKey = alertKey;
@@ -138,7 +128,7 @@ async function sendChatThankYouMessage(name, amount) {
           console.warn('[UPI Widget] Bot say error:', err);
         });
       }
-      return; // EXCLUSIVE RETURN: Never execute SE_API or other fallbacks!
+      return; // EXCLUSIVE: Never run fallbacks
     }
 
     // METHOD B: Nightbot REST API
