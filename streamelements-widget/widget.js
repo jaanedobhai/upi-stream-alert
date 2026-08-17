@@ -41,10 +41,13 @@ window.addEventListener('onWidgetLoad', function (obj) {
   if (typeof fieldData.ttsDelay !== 'undefined') config.ttsDelay = parseInt(fieldData.ttsDelay);
   if (fieldData.ttsVolume) config.ttsVolume = parseFloat(fieldData.ttsVolume) / 100;
   if (fieldData.soundUrl) config.soundUrl = fieldData.soundUrl;
+  if (typeof fieldData.minAmount !== 'undefined') config.minAmount = parseFloat(fieldData.minAmount) || 1;
   if (typeof fieldData.enableChatBot !== 'undefined') config.enableChatBot = fieldData.enableChatBot;
   if (fieldData.chatMessageFormat) config.chatMessageFormat = fieldData.chatMessageFormat;
   if (fieldData.nightbotToken) config.nightbotToken = fieldData.nightbotToken;
   if (fieldData.seJwtToken) config.seJwtToken = fieldData.seJwtToken;
+
+  console.log('[UPI Widget] Loaded Config - Minimum Amount Filter: ₹' + config.minAmount);
 
   initConnection();
 });
@@ -201,10 +204,18 @@ let lastProcessedAlertKey = '';
 let lastProcessedAlertTime = 0;
 
 function queueAlert(data) {
-  if (!data || data.amount < config.minAmount) return;
+  if (!data) return;
+
+  const amount = parseFloat(data.amount) || 0;
+  const minAmt = parseFloat(config.minAmount) || 1;
+
+  if (amount < minAmt) {
+    console.log(`[UPI Widget] ℹ️ Donation of ₹${amount} is below minimum threshold ₹${minAmt} — Alert Skipped.`);
+    return;
+  }
 
   const rawName = data.username || 'Anonymous';
-  const alertKey = `q_${rawName.toLowerCase().trim()}_${Math.round(data.amount)}`;
+  const alertKey = `q_${rawName.toLowerCase().trim()}_${Math.round(amount)}`;
   const now = Date.now();
 
   // Deduplication: Ignore identical alerts arriving within 10 seconds
@@ -341,19 +352,7 @@ function initFirebaseConnection() {
   }
 }
 
-function queueAlert(data) {
-  if (!data || data.amount < config.minAmount) return;
-  alertQueue.push(data);
-  processQueue();
-}
 
-function processQueue() {
-  if (isPlaying || alertQueue.length === 0) return;
-  
-  isPlaying = true;
-  const item = alertQueue.shift();
-  showAlert(item);
-}
 
 function showAlert(data) {
   const container = document.getElementById('upi-alert-container');
